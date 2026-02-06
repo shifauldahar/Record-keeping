@@ -1,0 +1,950 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Shifa-ul-Dahar | Record Keeping</title>
+
+  <!-- SheetJS (Excel export) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root{
+      /* Theme inspired by your image: dark green + warm yellow */
+      --bg: #0b2f2c;
+      --bg2:#08302b;
+      --card:#0f3a35;
+      --card2:#0c332f;
+      --line: rgba(255, 210, 102, .22);
+      --text: #eaf3f1;
+      --muted: rgba(234,243,241,.7);
+      --accent:#f2c15b;     /* yellowish */
+      --accent2:#ffd88a;    /* lighter yellow */
+      --danger:#ff5c5c;
+      --ok:#39d98a;
+      --shadow: 0 18px 48px rgba(0,0,0,.35);
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(1200px 700px at 20% 0%, rgba(242,193,91,.12), transparent 55%),
+                  radial-gradient(900px 600px at 100% 10%, rgba(242,193,91,.08), transparent 50%),
+                  linear-gradient(180deg, var(--bg), #061f1d 70%);
+      color: var(--text);
+      min-height:100vh;
+    }
+
+    .topbar{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(10px);
+      background: linear-gradient(180deg, rgba(11,47,44,.92), rgba(11,47,44,.65));
+      border-bottom: 1px solid var(--line);
+    }
+
+    .wrap{max-width:1100px;margin:0 auto;padding:18px 16px;}
+    .brand{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+    }
+    .brand h1{
+      margin:0;
+      letter-spacing:.6px;
+      font-size:18px;
+      font-weight:800;
+    }
+    .brand small{
+      display:block;
+      color:var(--muted);
+      font-weight:600;
+      margin-top:3px;
+    }
+
+    .btnrow{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
+    .btn{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(242,193,91,.18), rgba(15,58,53,.0));
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:750;
+      letter-spacing:.2px;
+      transition: transform .08s ease, border-color .2s ease, box-shadow .2s ease;
+      box-shadow: 0 8px 20px rgba(0,0,0,.22);
+      user-select:none;
+    }
+    .btn:hover{transform: translateY(-1px); border-color: rgba(242,193,91,.5)}
+    .btn.primary{
+      background: linear-gradient(180deg, rgba(242,193,91,.45), rgba(242,193,91,.12));
+      border-color: rgba(242,193,91,.55);
+      color:#082421;
+    }
+    .btn.danger{
+      background: linear-gradient(180deg, rgba(255,92,92,.25), rgba(15,58,53,.0));
+      border-color: rgba(255,92,92,.35);
+    }
+
+    .tabs{
+      display:flex;gap:10px;flex-wrap:wrap;
+      margin-top:14px;
+    }
+    .tab{
+      padding:10px 12px;border-radius:14px;cursor:pointer;
+      border:1px solid var(--line);
+      background: rgba(15,58,53,.45);
+      font-weight:800;
+      color:var(--muted);
+    }
+    .tab.active{
+      color:#082421;
+      background: linear-gradient(180deg, rgba(242,193,91,.55), rgba(242,193,91,.18));
+      border-color: rgba(242,193,91,.6);
+      box-shadow: var(--shadow);
+    }
+
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;margin-top:16px}
+    @media (max-width: 900px){ .grid{grid-template-columns:1fr;} }
+
+    .card{
+      background: linear-gradient(180deg, rgba(15,58,53,.72), rgba(12,51,47,.55));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:14px 14px 10px 14px;
+      border-bottom:1px solid var(--line);
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+    }
+    .card .hd h2{margin:0;font-size:14px;letter-spacing:.4px;font-weight:900}
+    .card .bd{padding:14px}
+
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width: 520px){ .row{grid-template-columns:1fr;} }
+
+    label{display:block;font-size:12px;color:var(--muted);font-weight:800;margin-bottom:6px}
+    input, textarea, select{
+      width:100%;
+      padding:11px 12px;
+      border-radius:12px;
+      border:1px solid rgba(242,193,91,.22);
+      outline:none;
+      background: rgba(6,31,29,.55);
+      color: var(--text);
+      font-weight:700;
+    }
+    textarea{min-height:88px;resize:vertical}
+    input::placeholder, textarea::placeholder{color:rgba(234,243,241,.45)}
+
+    .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+    .hint{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      font-size:13px;
+    }
+    th, td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(242,193,91,.18);
+      vertical-align:top;
+    }
+    th{color:var(--accent2);text-align:left;font-weight:900;letter-spacing:.25px}
+    td{color:rgba(234,243,241,.9);font-weight:650}
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(242,193,91,.25);
+      background: rgba(242,193,91,.08);
+      color: var(--accent2);
+      font-weight:900;font-size:12px;
+      white-space:nowrap;
+    }
+    .status-ok{border-color: rgba(57,217,138,.35); background: rgba(57,217,138,.08); color: rgba(57,217,138,.95)}
+    .status-bad{border-color: rgba(255,92,92,.35); background: rgba(255,92,92,.08); color: rgba(255,92,92,.95)}
+
+    .split{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .mini{
+      padding:8px 10px;
+      border-radius:12px;
+      font-size:12px;
+      font-weight:850;
+    }
+
+    /* Print styling: only print the medicine sheet section */
+    @media print{
+      body{background:#fff;color:#000}
+      .topbar, .tabs, .no-print{display:none !important}
+      .card{box-shadow:none;border:1px solid #ddd}
+      th{color:#000}
+      td{color:#000}
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="wrap">
+      <div class="brand">
+        <div>
+          <h1>SHIFA-UL-DAHAR — Record Keeping</h1>
+          <small>Rohani u Jasmani Ilaj Gah</small>
+        </div>
+        <div class="btnrow no-print">
+          <button class="btn primary" id="btnExport">Export Excel (.xlsx)</button>
+          <button class="btn danger" id="btnClearAll">Clear All Data</button>
+        </div>
+      </div>
+
+      <div class="tabs no-print">
+        <div class="tab active" data-tab="med">Balance Sheet</div>
+        <div class="tab" data-tab="cust">Customers Sheet</div>
+        <div class="tab" data-tab="sale">Sales Sheet</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- MEDICINES -->
+    <section id="tab-med" class="tabpane">
+      <div class="grid">
+
+        <div class="card" id="medicineCard">
+          <div class="hd">
+            <h2>Medicine Form (Add / Search / Update Stock)</h2>
+            <div class="split no-print">
+              <span class="pill" id="nextIdPill">Next ID: 001</span>
+              <button class="btn mini" id="btnPrintMedicine">Print Medicines</button>
+            </div>
+          </div>
+
+          <div class="bd">
+            <div class="row">
+              <div>
+                <label>Record ID (Search)</label>
+                <input id="mSearchId" placeholder="e.g. 001" />
+              </div>
+              <div class="no-print" style="display:flex;gap:10px;align-items:flex-end;">
+                <button class="btn" id="btnSearchMedicine" style="width:100%">Search ID</button>
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:12px">
+              <div>
+                <label>Record ID (Auto)</label>
+                <input id="mId" disabled />
+              </div>
+              <div>
+                <label>Medicine Name</label>
+                <input id="mName" placeholder="e.g. Majoon Shifaa" />
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:12px">
+              <div>
+                <label>New Quantity Added</label>
+                <input id="mAddQty" type="number" min="0" placeholder="e.g. 50" />
+              </div>
+              <div>
+                <label>Available Quantity (auto)</label>
+                <input id="mAvail" disabled />
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:12px">
+              <div>
+                <label>Total Quantity Added (auto)</label>
+                <input id="mTotal" disabled />
+              </div>
+              <div>
+                <label>Notes (optional)</label>
+                <input id="mNote" placeholder="batch / expiry / supplier..." />
+              </div>
+            </div>
+
+            <div class="actions no-print">
+              <button class="btn primary" id="btnSaveMedicine">Save / Add Stock</button>
+              <button class="btn" id="btnNewMedicine">New Medicine (Next ID)</button>
+            </div>
+
+            <div class="hint">
+              • Search by ID fills fields. <br/>
+              • “Save / Add Stock” adds the new quantity into <b>Total</b> and <b>Available</b>. <br/>
+              • Sales will automatically minus from Available.
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="hd">
+            <h2>Medicines List</h2>
+            <div class="pill" id="medCountPill">0 items</div>
+          </div>
+          <div class="bd" id="medicinePrintArea">
+            <table id="medTable">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Medicine</th>
+                  <th>Total Added</th>
+                  <th>Available</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- CUSTOMERS -->
+    <section id="tab-cust" class="tabpane" style="display:none">
+      <div class="grid">
+        <div class="card">
+          <div class="hd">
+            <h2>Customer Form</h2>
+            <div class="pill" id="custCountPill">0 customers</div>
+          </div>
+          <div class="bd">
+            <div class="row">
+              <div>
+                <label>Customer Name</label>
+                <input id="cName" placeholder="e.g. Ahmed Ali" />
+              </div>
+              <div>
+                <label>Mobile Number</label>
+                <input id="cMobile" placeholder="e.g. 03xx-xxxxxxx" />
+              </div>
+            </div>
+            <div style="margin-top:12px">
+              <label>Address</label>
+              <textarea id="cAddress" placeholder="Full address..."></textarea>
+            </div>
+
+            <div class="actions no-print">
+              <button class="btn primary" id="btnSaveCustomer">Save Customer</button>
+              <button class="btn" id="btnResetCustomer">Clear</button>
+            </div>
+
+            <div class="hint">
+              Customers are used in Sales. Mobile can help you find duplicates.
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="hd">
+            <h2>Customers List</h2>
+          </div>
+          <div class="bd">
+            <table id="custTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Mobile</th>
+                  <th>Address</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SALES -->
+    <section id="tab-sale" class="tabpane" style="display:none">
+      <div class="grid">
+        <div class="card">
+          <div class="hd">
+            <h2>Sale Entry (Multiple Items Allowed)</h2>
+            <div class="pill" id="saleCountPill">0 sales</div>
+          </div>
+          <div class="bd">
+            <div class="row">
+              <div>
+                <label>Customer (select or type)</label>
+                <input id="sCustomer" list="customerList" placeholder="e.g. Ahmed Ali" />
+                <datalist id="customerList"></datalist>
+              </div>
+              <div>
+                <label>Mobile</label>
+                <input id="sMobile" placeholder="03xx..." />
+              </div>
+            </div>
+
+            <div style="margin-top:12px">
+              <label>Address</label>
+              <input id="sAddress" placeholder="Address..." />
+            </div>
+
+            <hr style="border:0;border-top:1px solid var(--line);margin:14px 0" />
+
+            <div class="row">
+              <div>
+                <label>Medicine (choose)</label>
+                <select id="sMedSelect"></select>
+              </div>
+              <div>
+                <label>Quantity</label>
+                <input id="sQty" type="number" min="1" placeholder="e.g. 2" />
+              </div>
+            </div>
+
+            <div class="actions no-print">
+              <button class="btn" id="btnAddSaleItem">Add Item</button>
+              <button class="btn primary" id="btnFinalizeSale">Finalize Sale</button>
+              <button class="btn" id="btnResetSale">Clear Sale</button>
+            </div>
+
+            <div class="hint">
+              • Add multiple items then finalize once. <br/>
+              • Finalizing sale will minus quantities from medicine Available.
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="hd">
+            <h2>Current Sale Items</h2>
+            <div class="pill" id="saleItemsPill">0 items</div>
+          </div>
+          <div class="bd">
+            <table id="saleItemsTable">
+              <thead>
+                <tr>
+                  <th>Medicine</th>
+                  <th>Qty</th>
+                  <th>Available After</th>
+                  <th class="no-print">Remove</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+
+            <hr style="border:0;border-top:1px solid var(--line);margin:14px 0" />
+
+            <h3 style="margin:0 0 10px 0;font-size:13px;color:var(--accent2);letter-spacing:.3px">
+              Sales History
+            </h3>
+            <table id="salesTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th>Mobile</th>
+                  <th>Items</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+<script>
+/* =========================
+   Storage + Helpers
+========================= */
+const KEY = "shifa_records_v1";
+
+function loadState(){
+  const raw = localStorage.getItem(KEY);
+  if(!raw){
+    return { medicines: [], customers: [], sales: [] };
+  }
+  try{
+    return JSON.parse(raw);
+  }catch(e){
+    return { medicines: [], customers: [], sales: [] };
+  }
+}
+function saveState(){
+  localStorage.setItem(KEY, JSON.stringify(state));
+}
+function pad3(n){
+  const s = String(n);
+  return s.length >= 3 ? s : ("000" + s).slice(-3);
+}
+function nowStr(){
+  const d = new Date();
+  return d.toISOString().slice(0,19).replace("T"," ");
+}
+function findMedicineById(id){
+  return state.medicines.find(m => m.id === id);
+}
+function nextMedicineId(){
+  let max = 0;
+  for(const m of state.medicines){
+    const n = parseInt(m.id,10);
+    if(!Number.isNaN(n)) max = Math.max(max, n);
+  }
+  return pad3(max + 1);
+}
+
+/* =========================
+   App State
+========================= */
+let state = loadState();
+let currentSaleItems = []; // { medId, medName, qty }
+
+/* =========================
+   Tabs
+========================= */
+const tabs = document.querySelectorAll(".tab");
+tabs.forEach(t => t.addEventListener("click", () => {
+  tabs.forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  const tab = t.dataset.tab;
+  document.querySelectorAll(".tabpane").forEach(p => p.style.display = "none");
+  document.getElementById("tab-" + tab).style.display = "block";
+}));
+
+/* =========================
+   Medicines UI
+========================= */
+const el_mSearchId = document.getElementById("mSearchId");
+const el_mId = document.getElementById("mId");
+const el_mName = document.getElementById("mName");
+const el_mAddQty = document.getElementById("mAddQty");
+const el_mAvail = document.getElementById("mAvail");
+const el_mTotal = document.getElementById("mTotal");
+const el_mNote = document.getElementById("mNote");
+
+function resetMedicineFormToNew(){
+  el_mId.value = nextMedicineId();
+  el_mName.value = "";
+  el_mAddQty.value = "";
+  el_mAvail.value = "0";
+  el_mTotal.value = "0";
+  el_mNote.value = "";
+  el_mSearchId.value = "";
+  document.getElementById("nextIdPill").textContent = "Next ID: " + el_mId.value;
+}
+
+function fillMedicineForm(m){
+  el_mId.value = m.id;
+  el_mName.value = m.name;
+  el_mAvail.value = String(m.availableQty);
+  el_mTotal.value = String(m.totalQty);
+  el_mNote.value = m.note || "";
+  el_mAddQty.value = "";
+  document.getElementById("nextIdPill").textContent = "Loaded ID: " + m.id;
+}
+
+document.getElementById("btnNewMedicine").addEventListener("click", resetMedicineFormToNew);
+
+document.getElementById("btnSearchMedicine").addEventListener("click", () => {
+  const id = (el_mSearchId.value || "").trim();
+  if(!id) return alert("Enter Record ID to search (e.g. 001).");
+  const m = findMedicineById(id);
+  if(!m) return alert("No medicine found for ID " + id);
+  fillMedicineForm(m);
+});
+
+document.getElementById("btnSaveMedicine").addEventListener("click", () => {
+  const id = el_mId.value.trim();
+  const name = el_mName.value.trim();
+  const addQty = parseInt(el_mAddQty.value, 10) || 0;
+  const note = el_mNote.value.trim();
+
+  if(!id) return alert("Record ID missing.");
+  if(!name) return alert("Medicine name is required.");
+  if(addQty <= 0 && !findMedicineById(id)){
+    return alert("For new medicine, add some quantity (greater than 0).");
+  }
+  if(addQty < 0) return alert("Quantity cannot be negative.");
+
+  let m = findMedicineById(id);
+  if(!m){
+    m = { id, name, totalQty: 0, availableQty: 0, note: "" };
+    state.medicines.push(m);
+  }else{
+    // If renaming
+    m.name = name;
+  }
+
+  // Stock update
+  if(addQty > 0){
+    m.totalQty += addQty;
+    m.availableQty += addQty;
+  }
+  m.note = note;
+
+  saveState();
+  renderAll();
+  fillMedicineForm(m);
+});
+
+document.getElementById("btnPrintMedicine").addEventListener("click", () => {
+  // Print only medicines area (CSS hides topbar/tabs/buttons)
+
+  window.print();
+});
+
+function renderMedicines(){
+  const tbody = document.querySelector("#medTable tbody");
+  tbody.innerHTML = "";
+  const meds = [...state.medicines].sort((a,b)=> a.id.localeCompare(b.id));
+  for(const m of meds){
+    const tr = document.createElement("tr");
+
+    const status = m.availableQty > 0
+      ? `<span class="pill status-ok">In Stock</span>`
+      : `<span class="pill status-bad">Out</span>`;
+
+    tr.innerHTML = `
+      <td><b>${m.id}</b></td>
+      <td>${escapeHtml(m.name)}<div style="color:rgba(234,243,241,.6);font-size:12px;margin-top:4px">${escapeHtml(m.note||"")}</div></td>
+      <td>${m.totalQty}</td>
+      <td>${m.availableQty}</td>
+      <td>${status}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+  document.getElementById("medCountPill").textContent = meds.length + " items";
+  document.getElementById("nextIdPill").textContent =
+    (findMedicineById(el_mId.value) ? "Loaded ID: " : "Next ID: ") + el_mId.value;
+
+  // Update sales medicine dropdown
+  renderSalesMedicineDropdown();
+}
+
+/* =========================
+   Customers UI
+========================= */
+const el_cName = document.getElementById("cName");
+const el_cMobile = document.getElementById("cMobile");
+const el_cAddress = document.getElementById("cAddress");
+
+document.getElementById("btnSaveCustomer").addEventListener("click", () => {
+  const name = el_cName.value.trim();
+  const mobile = el_cMobile.value.trim();
+  const address = el_cAddress.value.trim();
+
+  if(!name) return alert("Customer name required.");
+  if(!mobile) return alert("Mobile number required.");
+
+  // Avoid duplicates by mobile
+  const existing = state.customers.find(c => c.mobile === mobile);
+  if(existing){
+    existing.name = name;
+    existing.address = address;
+  }else{
+    state.customers.push({ name, mobile, address });
+  }
+
+  saveState();
+  renderAll();
+  el_cName.value = ""; el_cMobile.value = ""; el_cAddress.value = "";
+});
+
+document.getElementById("btnResetCustomer").addEventListener("click", () => {
+  el_cName.value = ""; el_cMobile.value = ""; el_cAddress.value = "";
+});
+
+function renderCustomers(){
+  const tbody = document.querySelector("#custTable tbody");
+  tbody.innerHTML = "";
+  const cust = [...state.customers].sort((a,b)=> a.name.localeCompare(b.name));
+  cust.forEach((c, idx) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${idx+1}</td>
+      <td>${escapeHtml(c.name)}</td>
+      <td>${escapeHtml(c.mobile)}</td>
+      <td>${escapeHtml(c.address||"")}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  document.getElementById("custCountPill").textContent = cust.length + " customers";
+  renderCustomerDatalist();
+}
+
+function renderCustomerDatalist(){
+  const dl = document.getElementById("customerList");
+  dl.innerHTML = "";
+  for(const c of state.customers){
+    const opt = document.createElement("option");
+    opt.value = c.name;
+    dl.appendChild(opt);
+  }
+}
+
+/* =========================
+   Sales UI
+========================= */
+const el_sCustomer = document.getElementById("sCustomer");
+const el_sMobile = document.getElementById("sMobile");
+const el_sAddress = document.getElementById("sAddress");
+const el_sMedSelect = document.getElementById("sMedSelect");
+const el_sQty = document.getElementById("sQty");
+
+function renderSalesMedicineDropdown(){
+  const meds = [...state.medicines].sort((a,b)=> a.name.localeCompare(b.name));
+  el_sMedSelect.innerHTML = "";
+  if(meds.length === 0){
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "No medicines (add in Medicines Sheet)";
+    el_sMedSelect.appendChild(opt);
+    el_sMedSelect.disabled = true;
+  }else{
+    el_sMedSelect.disabled = false;
+    for(const m of meds){
+      const opt = document.createElement("option");
+      opt.value = m.id;
+      opt.textContent = `${m.name} (ID ${m.id}, Avail: ${m.availableQty})`;
+      el_sMedSelect.appendChild(opt);
+    }
+  }
+}
+
+function syncCustomerByName(){
+  const name = el_sCustomer.value.trim();
+  if(!name) return;
+  const c = state.customers.find(x => x.name.toLowerCase() === name.toLowerCase());
+  if(c){
+    el_sMobile.value = c.mobile;
+    el_sAddress.value = c.address || "";
+  }
+}
+el_sCustomer.addEventListener("change", syncCustomerByName);
+el_sCustomer.addEventListener("blur", syncCustomerByName);
+
+document.getElementById("btnAddSaleItem").addEventListener("click", () => {
+  const medId = el_sMedSelect.value;
+  if(!medId) return alert("Select a medicine.");
+  const qty = parseInt(el_sQty.value, 10);
+  if(!qty || qty <= 0) return alert("Enter quantity (>= 1).");
+
+  const m = findMedicineById(medId);
+  if(!m) return alert("Medicine not found.");
+  const alreadyInCart = currentSaleItems.find(i => i.medId === medId);
+  const totalWanted = (alreadyInCart ? alreadyInCart.qty : 0) + qty;
+
+  if(totalWanted > m.availableQty){
+    return alert(`Not enough stock. Available: ${m.availableQty}`);
+  }
+
+  if(alreadyInCart){
+    alreadyInCart.qty += qty;
+  }else{
+    currentSaleItems.push({ medId, medName: m.name, qty });
+  }
+
+  el_sQty.value = "";
+  renderCurrentSaleItems();
+});
+
+document.getElementById("btnResetSale").addEventListener("click", () => {
+  currentSaleItems = [];
+  el_sCustomer.value = "";
+  el_sMobile.value = "";
+  el_sAddress.value = "";
+  el_sQty.value = "";
+  renderCurrentSaleItems();
+});
+
+document.getElementById("btnFinalizeSale").addEventListener("click", () => {
+  const customer = el_sCustomer.value.trim();
+  const mobile = el_sMobile.value.trim();
+  const address = el_sAddress.value.trim();
+
+  if(!customer) return alert("Customer name required.");
+  if(!mobile) return alert("Mobile required.");
+  if(currentSaleItems.length === 0) return alert("Add at least one item.");
+
+  // Deduct stock
+  for(const item of currentSaleItems){
+    const m = findMedicineById(item.medId);
+    if(!m) return alert("Medicine missing: " + item.medName);
+    if(item.qty > m.availableQty) return alert("Stock changed. Not enough for: " + item.medName);
+  }
+  for(const item of currentSaleItems){
+    const m = findMedicineById(item.medId);
+    m.availableQty -= item.qty;
+  }
+
+  // Save sale
+  const sale = {
+    date: nowStr(),
+    customer,
+    mobile,
+    address,
+    items: currentSaleItems.map(i => ({ medId:i.medId, medName:i.medName, qty:i.qty }))
+  };
+  state.sales.push(sale);
+
+  // Save customer too (update/insert by mobile)
+  const existing = state.customers.find(c => c.mobile === mobile);
+  if(existing){
+    existing.name = customer;
+    existing.address = address;
+  }else{
+    state.customers.push({ name: customer, mobile, address });
+  }
+
+  saveState();
+  currentSaleItems = [];
+  renderAll();
+  el_sQty.value = "";
+});
+
+function renderCurrentSaleItems(){
+  const tbody = document.querySelector("#saleItemsTable tbody");
+  tbody.innerHTML = "";
+  for(let idx=0; idx<currentSaleItems.length; idx++){
+    const it = currentSaleItems[idx];
+    const m = findMedicineById(it.medId);
+    const after = m ? (m.availableQty - it.qty) : "—";
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${escapeHtml(it.medName)} <div style="color:rgba(234,243,241,.6);font-size:12px;margin-top:4px">ID: ${it.medId}</div></td>
+      <td><b>${it.qty}</b></td>
+      <td>${after}</td>
+      <td class="no-print"><button class="btn mini danger" data-rm="${idx}">Remove</button></td>
+    `;
+    tbody.appendChild(tr);
+  }
+  document.getElementById("saleItemsPill").textContent = currentSaleItems.length + " items";
+
+  tbody.querySelectorAll("button[data-rm]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const i = parseInt(btn.dataset.rm,10);
+      currentSaleItems.splice(i,1);
+      renderCurrentSaleItems();
+    });
+  });
+}
+
+function renderSalesHistory(){
+  const tbody = document.querySelector("#salesTable tbody");
+  tbody.innerHTML = "";
+  const sales = [...state.sales].slice().reverse();
+
+  for(const s of sales){
+    const itemsText = s.items.map(i => `${i.medName} × ${i.qty}`).join(", ");
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${escapeHtml(s.date)}</td>
+      <td>${escapeHtml(s.customer)}</td>
+      <td>${escapeHtml(s.mobile)}</td>
+      <td>${escapeHtml(itemsText)}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+  document.getElementById("saleCountPill").textContent = state.sales.length + " sales";
+}
+
+/* =========================
+   Export Excel (.xlsx)
+========================= */
+document.getElementById("btnExport").addEventListener("click", () => {
+  // Prepare arrays for sheets
+  const meds = [...state.medicines].sort((a,b)=> a.id.localeCompare(b.id)).map(m => ({
+    ID: m.id,
+    Medicine: m.name,
+    TotalAdded: m.totalQty,
+    Available: m.availableQty,
+    Note: m.note || ""
+  }));
+
+  const cust = [...state.customers].sort((a,b)=> a.name.localeCompare(b.name)).map(c => ({
+    Name: c.name,
+    Mobile: c.mobile,
+    Address: c.address || ""
+  }));
+
+  const salesRows = [];
+  for(const s of state.sales){
+    for(const it of s.items){
+      salesRows.push({
+        Date: s.date,
+        Customer: s.customer,
+        Mobile: s.mobile,
+        Address: s.address || "",
+        MedicineID: it.medId,
+        Medicine: it.medName,
+        Qty: it.qty
+      });
+    }
+  }
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(meds), "Medicines");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cust), "Customers");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(salesRows), "Sales");
+
+  XLSX.writeFile(wb, "Shifa-ul-Dahar_Records.xlsx");
+});
+
+/* =========================
+   Clear All
+========================= */
+document.getElementById("btnClearAll").addEventListener("click", () => {
+  if(!confirm("This will delete ALL medicines, customers and sales. Continue?")) return;
+  state = { medicines: [], customers: [], sales: [] };
+  currentSaleItems = [];
+  saveState();
+  renderAll();
+  resetMedicineFormToNew();
+});
+
+/* =========================
+   Render All
+========================= */
+function renderAll(){
+  renderMedicines();
+  renderCustomers();
+  renderSalesHistory();
+  renderCurrentSaleItems();
+  resetIfFormInInvalidState();
+}
+
+function resetIfFormInInvalidState(){
+  // If current medicine id empty, set new
+  if(!el_mId.value) resetMedicineFormToNew();
+
+  // Refresh dropdown text with current stock numbers
+  renderSalesMedicineDropdown();
+}
+
+/* =========================
+   Security: escape HTML
+========================= */
+function escapeHtml(str){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+/* =========================
+   Initial
+========================= */
+resetMedicineFormToNew();
+renderAll();
+</script>
+</body>
+</html>
