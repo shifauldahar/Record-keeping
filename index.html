@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -592,12 +593,104 @@ document.getElementById("btnSaveMedicine").addEventListener("click", () => {
   saveState();
   renderAll();
   fillMedicineForm(m);
+  location.reload();
+  
 });
-
 document.getElementById("btnPrintMedicine").addEventListener("click", () => {
-  // Print only medicines area (CSS hides topbar/tabs/buttons)
+  // ✅ Set your logo path here (same folder example)
+  const LOGO_URL = "logo.png"; // or "images/logo.png" or full URL
 
-  window.print();
+  // Take only the medicines table area
+  const printArea = document.getElementById("medicinePrintArea");
+  const tableHtml = printArea ? printArea.innerHTML : "<p>No data to print</p>";
+
+  // Open a clean print window
+  const w = window.open("", "_blank", "width=900,height=650");
+  w.document.open();
+  w.document.write(`
+    <!doctype html>
+    <html>
+    <head>
+      <meta charset="utf-8" />
+      <title>Print Medicines</title>
+      <style>
+        body{
+          font-family: Arial, sans-serif;
+          padding: 20px;
+          color:#000;
+        }
+        .header{
+          display:flex;
+          align-items:center;
+          gap:12px;
+          border-bottom:2px solid #ddd;
+          padding-bottom:12px;
+          margin-bottom:14px;
+        }
+        .header img{
+          height:60px;
+          width:auto;
+          object-fit:contain;
+        }
+        .header .txt h1{
+          margin:0;
+          font-size:18px;
+          letter-spacing:.3px;
+        }
+        .header .txt small{
+          display:block;
+          margin-top:4px;
+          color:#444;
+          font-weight:600;
+        }
+        .meta{
+          margin: 8px 0 14px 0;
+          font-size:12px;
+          color:#333;
+        }
+
+        table{
+          width:100%;
+          border-collapse:collapse;
+          font-size:13px;
+        }
+        th, td{
+          padding:10px;
+          border:1px solid #ddd;
+          text-align:left;
+          vertical-align:top;
+        }
+        th{
+          background:#f5f5f5;
+          font-weight:700;
+        }
+        /* hide "Status" colors/pills if you want them plain in print */
+        .pill{ border:0 !important; background:transparent !important; padding:0 !important; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <img src="logo1.png" alt="Brand Logo" onerror="this.style.display='none'"/>
+        <div class="txt">
+          <h1>SHIFA-UL-DAHAR — Medicines Sheet</h1>
+          <small>Rohani u Jasmani Ilaj Gah</small>
+        </div>
+      </div>
+
+      <div class="meta">Printed on: ${new Date().toLocaleString()}</div>
+
+      ${tableHtml}
+
+      <script>
+        window.onload = function(){
+          window.print();
+          window.close();
+        };
+      <\/script>
+    </body>
+    </html>
+  `);
+  w.document.close();
 });
 
 function renderMedicines(){
