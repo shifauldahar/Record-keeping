@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -11,7 +10,6 @@
 
   <style>
     :root{
-      /* Theme inspired by your image: dark green + warm yellow */
       --bg: #0b2f2c;
       --bg2:#08302b;
       --card:#0f3a35;
@@ -19,8 +17,8 @@
       --line: rgba(255, 210, 102, .22);
       --text: #eaf3f1;
       --muted: rgba(234,243,241,.7);
-      --accent:#f2c15b;     /* yellowish */
-      --accent2:#ffd88a;    /* lighter yellow */
+      --accent:#f2c15b;
+      --accent2:#ffd88a;
       --danger:#ff5c5c;
       --ok:#39d98a;
       --shadow: 0 18px 48px rgba(0,0,0,.35);
@@ -45,21 +43,9 @@
     }
 
     .wrap{max-width:1100px;margin:0 auto;padding:18px 16px;}
-    .brand{
-      display:flex;align-items:center;justify-content:space-between;gap:12px;
-    }
-    .brand h1{
-      margin:0;
-      letter-spacing:.6px;
-      font-size:18px;
-      font-weight:800;
-    }
-    .brand small{
-      display:block;
-      color:var(--muted);
-      font-weight:600;
-      margin-top:3px;
-    }
+    .brand{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+    .brand h1{margin:0;letter-spacing:.6px;font-size:18px;font-weight:800;}
+    .brand small{display:block;color:var(--muted);font-weight:600;margin-top:3px;}
 
     .btnrow{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
     .btn{
@@ -86,16 +72,12 @@
       border-color: rgba(255,92,92,.35);
     }
 
-    .tabs{
-      display:flex;gap:10px;flex-wrap:wrap;
-      margin-top:14px;
-    }
+    .tabs{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
     .tab{
       padding:10px 12px;border-radius:14px;cursor:pointer;
       border:1px solid var(--line);
       background: rgba(15,58,53,.45);
-      font-weight:800;
-      color:var(--muted);
+      font-weight:800;color:var(--muted);
     }
     .tab.active{
       color:#082421;
@@ -140,25 +122,13 @@
     input::placeholder, textarea::placeholder{color:rgba(234,243,241,.45)}
 
     .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
-    .hint{
-      margin-top:10px;
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.45;
-    }
+    .hint{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.45;}
 
-    table{
-      width:100%;
-      border-collapse: collapse;
-      font-size:13px;
-    }
-    th, td{
-      padding:10px 10px;
-      border-bottom:1px solid rgba(242,193,91,.18);
-      vertical-align:top;
-    }
+    table{width:100%;border-collapse: collapse;font-size:13px;}
+    th, td{padding:10px 10px;border-bottom:1px solid rgba(242,193,91,.18);vertical-align:top;}
     th{color:var(--accent2);text-align:left;font-weight:900;letter-spacing:.25px}
     td{color:rgba(234,243,241,.9);font-weight:650}
+
     .pill{
       display:inline-flex;align-items:center;gap:8px;
       padding:6px 10px;border-radius:999px;
@@ -171,18 +141,9 @@
     .status-ok{border-color: rgba(57,217,138,.35); background: rgba(57,217,138,.08); color: rgba(57,217,138,.95)}
     .status-bad{border-color: rgba(255,92,92,.35); background: rgba(255,92,92,.08); color: rgba(255,92,92,.95)}
 
-    .split{
-      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-    .mini{
-      padding:8px 10px;
-      border-radius:12px;
-      font-size:12px;
-      font-weight:850;
-    }
+    .split{display:flex; gap:10px; align-items:center; flex-wrap:wrap;justify-content:flex-end;}
+    .mini{padding:8px 10px;border-radius:12px;font-size:12px;font-weight:850;}
 
-    /* Print styling: only print the medicine sheet section */
     @media print{
       body{background:#fff;color:#000}
       .topbar, .tabs, .no-print{display:none !important}
@@ -190,8 +151,41 @@
       th{color:#000}
       td{color:#000}
     }
+
+    .toast{
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      background: rgba(15,58,53,.92);
+      border: 1px solid rgba(242,193,91,.35);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      font-weight: 800;
+      font-size: 12px;
+      max-width: 360px;
+      display:none;
+      z-index: 9999;
+      white-space:pre-line;
+    }
+    .toast.show{display:block}
+    .toast.ok{border-color: rgba(57,217,138,.35)}
+    .toast.bad{border-color: rgba(255,92,92,.35)}
+
+    .badge{
+      font-size:12px;
+      color:rgba(234,243,241,.85);
+      border:1px solid rgba(242,193,91,.25);
+      background: rgba(242,193,91,.06);
+      padding:6px 10px;
+      border-radius: 999px;
+      font-weight:800;
+    }
+    .right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
   </style>
 </head>
+
 <body>
   <div class="topbar">
     <div class="wrap">
@@ -200,9 +194,14 @@
           <h1>SHIFA-UL-DAHAR — Record Keeping</h1>
           <small>Rohani u Jasmani Ilaj Gah</small>
         </div>
-        <div class="btnrow no-print">
-          <button class="btn primary" id="btnExport">Export Excel (.xlsx)</button>
-          <button class="btn danger" id="btnClearAll">Clear All Data</button>
+
+        <div class="right no-print">
+          <span class="badge" id="connBadge">Connecting…</span>
+          <div class="btnrow">
+            <button class="btn" id="btnSync">Sync From Sheet</button>
+            <button class="btn primary" id="btnExport">Export Excel (.xlsx)</button>
+            <button class="btn danger" id="btnClearAll">Clear All Data</button>
+          </div>
         </div>
       </div>
 
@@ -215,12 +214,11 @@
   </div>
 
   <div class="wrap">
-
     <!-- MEDICINES -->
     <section id="tab-med" class="tabpane">
       <div class="grid">
 
-        <div class="card" id="medicineCard">
+        <div class="card">
           <div class="hd">
             <h2>Medicine Form (Add / Search / Update Stock)</h2>
             <div class="split no-print">
@@ -279,8 +277,8 @@
             </div>
 
             <div class="hint">
-              • Search by ID fills fields. <br/>
-              • “Save / Add Stock” adds the new quantity into <b>Total</b> and <b>Available</b>. <br/>
+              • Search by ID fills fields.<br/>
+              • “Save / Add Stock” adds the new quantity into <b>Total</b> and <b>Available</b>.<br/>
               • Sales will automatically minus from Available.
             </div>
           </div>
@@ -340,7 +338,7 @@
             </div>
 
             <div class="hint">
-              Customers are used in Sales. Mobile can help you find duplicates.
+              Customers are used in Sales. Mobile helps to avoid duplicates (unique).
             </div>
           </div>
         </div>
@@ -412,8 +410,8 @@
             </div>
 
             <div class="hint">
-              • Add multiple items then finalize once. <br/>
-              • Finalizing sale will minus quantities from medicine Available.
+              • Add multiple items then finalize once.<br/>
+              • Finalize will save sale + update stock in Google Sheet.
             </div>
           </div>
         </div>
@@ -461,583 +459,9 @@
 
   </div>
 
-<script>
-/* =========================
-   Storage + Helpers
-========================= */
-const KEY = "shifa_records_v1";
+  <div class="toast" id="toast"></div>
 
-function loadState(){
-  const raw = localStorage.getItem(KEY);
-  if(!raw){
-    return { medicines: [], customers: [], sales: [] };
-  }
-  try{
-    return JSON.parse(raw);
-  }catch(e){
-    return { medicines: [], customers: [], sales: [] };
-  }
-}
-function saveState(){
-  localStorage.setItem(KEY, JSON.stringify(state));
-}
-function pad3(n){
-  const s = String(n);
-  return s.length >= 3 ? s : ("000" + s).slice(-3);
-}
-function nowStr(){
-  const d = new Date();
-  return d.toISOString().slice(0,19).replace("T"," ");
-}
-function findMedicineById(id){
-  return state.medicines.find(m => m.id === id);
-}
-function nextMedicineId(){
-  let max = 0;
-  for(const m of state.medicines){
-    const n = parseInt(m.id,10);
-    if(!Number.isNaN(n)) max = Math.max(max, n);
-  }
-  return pad3(max + 1);
-}
-
-/* =========================
-   App State
-========================= */
-let state = loadState();
-let currentSaleItems = []; // { medId, medName, qty }
-
-/* =========================
-   Tabs
-========================= */
-const tabs = document.querySelectorAll(".tab");
-tabs.forEach(t => t.addEventListener("click", () => {
-  tabs.forEach(x => x.classList.remove("active"));
-  t.classList.add("active");
-  const tab = t.dataset.tab;
-  document.querySelectorAll(".tabpane").forEach(p => p.style.display = "none");
-  document.getElementById("tab-" + tab).style.display = "block";
-}));
-
-/* =========================
-   Medicines UI
-========================= */
-const el_mSearchId = document.getElementById("mSearchId");
-const el_mId = document.getElementById("mId");
-const el_mName = document.getElementById("mName");
-const el_mAddQty = document.getElementById("mAddQty");
-const el_mAvail = document.getElementById("mAvail");
-const el_mTotal = document.getElementById("mTotal");
-const el_mNote = document.getElementById("mNote");
-
-function resetMedicineFormToNew(){
-  el_mId.value = nextMedicineId();
-  el_mName.value = "";
-  el_mAddQty.value = "";
-  el_mAvail.value = "0";
-  el_mTotal.value = "0";
-  el_mNote.value = "";
-  el_mSearchId.value = "";
-  document.getElementById("nextIdPill").textContent = "Next ID: " + el_mId.value;
-}
-
-function fillMedicineForm(m){
-  el_mId.value = m.id;
-  el_mName.value = m.name;
-  el_mAvail.value = String(m.availableQty);
-  el_mTotal.value = String(m.totalQty);
-  el_mNote.value = m.note || "";
-  el_mAddQty.value = "";
-  document.getElementById("nextIdPill").textContent = "Loaded ID: " + m.id;
-}
-
-document.getElementById("btnNewMedicine").addEventListener("click", resetMedicineFormToNew);
-
-document.getElementById("btnSearchMedicine").addEventListener("click", () => {
-  const id = (el_mSearchId.value || "").trim();
-  if(!id) return alert("Enter Record ID to search (e.g. 001).");
-  const m = findMedicineById(id);
-  if(!m) return alert("No medicine found for ID " + id);
-  fillMedicineForm(m);
-});
-
-document.getElementById("btnSaveMedicine").addEventListener("click", () => {
-  const id = el_mId.value.trim();
-  const name = el_mName.value.trim();
-  const addQty = parseInt(el_mAddQty.value, 10) || 0;
-  const note = el_mNote.value.trim();
-
-  if(!id) return alert("Record ID missing.");
-  if(!name) return alert("Medicine name is required.");
-  if(addQty <= 0 && !findMedicineById(id)){
-    return alert("For new medicine, add some quantity (greater than 0).");
-  }
-  if(addQty < 0) return alert("Quantity cannot be negative.");
-
-  let m = findMedicineById(id);
-  if(!m){
-    m = { id, name, totalQty: 0, availableQty: 0, note: "" };
-    state.medicines.push(m);
-  }else{
-    // If renaming
-    m.name = name;
-  }
-
-  // Stock update
-  if(addQty > 0){
-    m.totalQty += addQty;
-    m.availableQty += addQty;
-  }
-  m.note = note;
-
-  saveState();
-  renderAll();
-  fillMedicineForm(m);
-  location.reload();
-  
-});
-document.getElementById("btnPrintMedicine").addEventListener("click", () => {
-  // ✅ Set your logo path here (same folder example)
-  const LOGO_URL = "logo.png"; // or "images/logo.png" or full URL
-
-  // Take only the medicines table area
-  const printArea = document.getElementById("medicinePrintArea");
-  const tableHtml = printArea ? printArea.innerHTML : "<p>No data to print</p>";
-
-  // Open a clean print window
-  const w = window.open("", "_blank", "width=900,height=650");
-  w.document.open();
-  w.document.write(`
-    <!doctype html>
-    <html>
-    <head>
-      <meta charset="utf-8" />
-      <title>Print Medicines</title>
-      <style>
-        body{
-          font-family: Arial, sans-serif;
-          padding: 20px;
-          color:#000;
-        }
-        .header{
-          display:flex;
-          align-items:center;
-          gap:12px;
-          border-bottom:2px solid #ddd;
-          padding-bottom:12px;
-          margin-bottom:14px;
-        }
-        .header img{
-          height:60px;
-          width:auto;
-          object-fit:contain;
-        }
-        .header .txt h1{
-          margin:0;
-          font-size:18px;
-          letter-spacing:.3px;
-        }
-        .header .txt small{
-          display:block;
-          margin-top:4px;
-          color:#444;
-          font-weight:600;
-        }
-        .meta{
-          margin: 8px 0 14px 0;
-          font-size:12px;
-          color:#333;
-        }
-
-        table{
-          width:100%;
-          border-collapse:collapse;
-          font-size:13px;
-        }
-        th, td{
-          padding:10px;
-          border:1px solid #ddd;
-          text-align:left;
-          vertical-align:top;
-        }
-        th{
-          background:#f5f5f5;
-          font-weight:700;
-        }
-        /* hide "Status" colors/pills if you want them plain in print */
-        .pill{ border:0 !important; background:transparent !important; padding:0 !important; }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <img src="logo1.png" alt="Brand Logo" onerror="this.style.display='none'"/>
-        <div class="txt">
-          <h1>SHIFA-UL-DAHAR — Medicines Sheet</h1>
-          <small>Rohani u Jasmani Ilaj Gah</small>
-        </div>
-      </div>
-
-      <div class="meta">Printed on: ${new Date().toLocaleString()}</div>
-
-      ${tableHtml}
-
-      <script>
-        window.onload = function(){
-          window.print();
-          window.close();
-        };
-      <\/script>
-    </body>
-    </html>
-  `);
-  w.document.close();
-});
-
-function renderMedicines(){
-  const tbody = document.querySelector("#medTable tbody");
-  tbody.innerHTML = "";
-  const meds = [...state.medicines].sort((a,b)=> a.id.localeCompare(b.id));
-  for(const m of meds){
-    const tr = document.createElement("tr");
-
-    const status = m.availableQty > 0
-      ? `<span class="pill status-ok">In Stock</span>`
-      : `<span class="pill status-bad">Out</span>`;
-
-    tr.innerHTML = `
-      <td><b>${m.id}</b></td>
-      <td>${escapeHtml(m.name)}<div style="color:rgba(234,243,241,.6);font-size:12px;margin-top:4px">${escapeHtml(m.note||"")}</div></td>
-      <td>${m.totalQty}</td>
-      <td>${m.availableQty}</td>
-      <td>${status}</td>
-    `;
-    tbody.appendChild(tr);
-  }
-  document.getElementById("medCountPill").textContent = meds.length + " items";
-  document.getElementById("nextIdPill").textContent =
-    (findMedicineById(el_mId.value) ? "Loaded ID: " : "Next ID: ") + el_mId.value;
-
-  // Update sales medicine dropdown
-  renderSalesMedicineDropdown();
-}
-
-/* =========================
-   Customers UI
-========================= */
-const el_cName = document.getElementById("cName");
-const el_cMobile = document.getElementById("cMobile");
-const el_cAddress = document.getElementById("cAddress");
-
-document.getElementById("btnSaveCustomer").addEventListener("click", () => {
-  const name = el_cName.value.trim();
-  const mobile = el_cMobile.value.trim();
-  const address = el_cAddress.value.trim();
-
-  if(!name) return alert("Customer name required.");
-  if(!mobile) return alert("Mobile number required.");
-
-  // Avoid duplicates by mobile
-  const existing = state.customers.find(c => c.mobile === mobile);
-  if(existing){
-    existing.name = name;
-    existing.address = address;
-  }else{
-    state.customers.push({ name, mobile, address });
-  }
-
-  saveState();
-  renderAll();
-  el_cName.value = ""; el_cMobile.value = ""; el_cAddress.value = "";
-});
-
-document.getElementById("btnResetCustomer").addEventListener("click", () => {
-  el_cName.value = ""; el_cMobile.value = ""; el_cAddress.value = "";
-});
-
-function renderCustomers(){
-  const tbody = document.querySelector("#custTable tbody");
-  tbody.innerHTML = "";
-  const cust = [...state.customers].sort((a,b)=> a.name.localeCompare(b.name));
-  cust.forEach((c, idx) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${idx+1}</td>
-      <td>${escapeHtml(c.name)}</td>
-      <td>${escapeHtml(c.mobile)}</td>
-      <td>${escapeHtml(c.address||"")}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-  document.getElementById("custCountPill").textContent = cust.length + " customers";
-  renderCustomerDatalist();
-}
-
-function renderCustomerDatalist(){
-  const dl = document.getElementById("customerList");
-  dl.innerHTML = "";
-  for(const c of state.customers){
-    const opt = document.createElement("option");
-    opt.value = c.name;
-    dl.appendChild(opt);
-  }
-}
-
-/* =========================
-   Sales UI
-========================= */
-const el_sCustomer = document.getElementById("sCustomer");
-const el_sMobile = document.getElementById("sMobile");
-const el_sAddress = document.getElementById("sAddress");
-const el_sMedSelect = document.getElementById("sMedSelect");
-const el_sQty = document.getElementById("sQty");
-
-function renderSalesMedicineDropdown(){
-  const meds = [...state.medicines].sort((a,b)=> a.name.localeCompare(b.name));
-  el_sMedSelect.innerHTML = "";
-  if(meds.length === 0){
-    const opt = document.createElement("option");
-    opt.value = "";
-    opt.textContent = "No medicines (add in Medicines Sheet)";
-    el_sMedSelect.appendChild(opt);
-    el_sMedSelect.disabled = true;
-  }else{
-    el_sMedSelect.disabled = false;
-    for(const m of meds){
-      const opt = document.createElement("option");
-      opt.value = m.id;
-      opt.textContent = `${m.name} (ID ${m.id}, Avail: ${m.availableQty})`;
-      el_sMedSelect.appendChild(opt);
-    }
-  }
-}
-
-function syncCustomerByName(){
-  const name = el_sCustomer.value.trim();
-  if(!name) return;
-  const c = state.customers.find(x => x.name.toLowerCase() === name.toLowerCase());
-  if(c){
-    el_sMobile.value = c.mobile;
-    el_sAddress.value = c.address || "";
-  }
-}
-el_sCustomer.addEventListener("change", syncCustomerByName);
-el_sCustomer.addEventListener("blur", syncCustomerByName);
-
-document.getElementById("btnAddSaleItem").addEventListener("click", () => {
-  const medId = el_sMedSelect.value;
-  if(!medId) return alert("Select a medicine.");
-  const qty = parseInt(el_sQty.value, 10);
-  if(!qty || qty <= 0) return alert("Enter quantity (>= 1).");
-
-  const m = findMedicineById(medId);
-  if(!m) return alert("Medicine not found.");
-  const alreadyInCart = currentSaleItems.find(i => i.medId === medId);
-  const totalWanted = (alreadyInCart ? alreadyInCart.qty : 0) + qty;
-
-  if(totalWanted > m.availableQty){
-    return alert(`Not enough stock. Available: ${m.availableQty}`);
-  }
-
-  if(alreadyInCart){
-    alreadyInCart.qty += qty;
-  }else{
-    currentSaleItems.push({ medId, medName: m.name, qty });
-  }
-
-  el_sQty.value = "";
-  renderCurrentSaleItems();
-});
-
-document.getElementById("btnResetSale").addEventListener("click", () => {
-  currentSaleItems = [];
-  el_sCustomer.value = "";
-  el_sMobile.value = "";
-  el_sAddress.value = "";
-  el_sQty.value = "";
-  renderCurrentSaleItems();
-});
-
-document.getElementById("btnFinalizeSale").addEventListener("click", () => {
-  const customer = el_sCustomer.value.trim();
-  const mobile = el_sMobile.value.trim();
-  const address = el_sAddress.value.trim();
-
-  if(!customer) return alert("Customer name required.");
-  if(!mobile) return alert("Mobile required.");
-  if(currentSaleItems.length === 0) return alert("Add at least one item.");
-
-  // Deduct stock
-  for(const item of currentSaleItems){
-    const m = findMedicineById(item.medId);
-    if(!m) return alert("Medicine missing: " + item.medName);
-    if(item.qty > m.availableQty) return alert("Stock changed. Not enough for: " + item.medName);
-  }
-  for(const item of currentSaleItems){
-    const m = findMedicineById(item.medId);
-    m.availableQty -= item.qty;
-  }
-
-  // Save sale
-  const sale = {
-    date: nowStr(),
-    customer,
-    mobile,
-    address,
-    items: currentSaleItems.map(i => ({ medId:i.medId, medName:i.medName, qty:i.qty }))
-  };
-  state.sales.push(sale);
-
-  // Save customer too (update/insert by mobile)
-  const existing = state.customers.find(c => c.mobile === mobile);
-  if(existing){
-    existing.name = customer;
-    existing.address = address;
-  }else{
-    state.customers.push({ name: customer, mobile, address });
-  }
-
-  saveState();
-  currentSaleItems = [];
-  renderAll();
-  el_sQty.value = "";
-});
-
-function renderCurrentSaleItems(){
-  const tbody = document.querySelector("#saleItemsTable tbody");
-  tbody.innerHTML = "";
-  for(let idx=0; idx<currentSaleItems.length; idx++){
-    const it = currentSaleItems[idx];
-    const m = findMedicineById(it.medId);
-    const after = m ? (m.availableQty - it.qty) : "—";
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${escapeHtml(it.medName)} <div style="color:rgba(234,243,241,.6);font-size:12px;margin-top:4px">ID: ${it.medId}</div></td>
-      <td><b>${it.qty}</b></td>
-      <td>${after}</td>
-      <td class="no-print"><button class="btn mini danger" data-rm="${idx}">Remove</button></td>
-    `;
-    tbody.appendChild(tr);
-  }
-  document.getElementById("saleItemsPill").textContent = currentSaleItems.length + " items";
-
-  tbody.querySelectorAll("button[data-rm]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const i = parseInt(btn.dataset.rm,10);
-      currentSaleItems.splice(i,1);
-      renderCurrentSaleItems();
-    });
-  });
-}
-
-function renderSalesHistory(){
-  const tbody = document.querySelector("#salesTable tbody");
-  tbody.innerHTML = "";
-  const sales = [...state.sales].slice().reverse();
-
-  for(const s of sales){
-    const itemsText = s.items.map(i => `${i.medName} × ${i.qty}`).join(", ");
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${escapeHtml(s.date)}</td>
-      <td>${escapeHtml(s.customer)}</td>
-      <td>${escapeHtml(s.mobile)}</td>
-      <td>${escapeHtml(itemsText)}</td>
-    `;
-    tbody.appendChild(tr);
-  }
-  document.getElementById("saleCountPill").textContent = state.sales.length + " sales";
-}
-
-/* =========================
-   Export Excel (.xlsx)
-========================= */
-document.getElementById("btnExport").addEventListener("click", () => {
-  // Prepare arrays for sheets
-  const meds = [...state.medicines].sort((a,b)=> a.id.localeCompare(b.id)).map(m => ({
-    ID: m.id,
-    Medicine: m.name,
-    TotalAdded: m.totalQty,
-    Available: m.availableQty,
-    Note: m.note || ""
-  }));
-
-  const cust = [...state.customers].sort((a,b)=> a.name.localeCompare(b.name)).map(c => ({
-    Name: c.name,
-    Mobile: c.mobile,
-    Address: c.address || ""
-  }));
-
-  const salesRows = [];
-  for(const s of state.sales){
-    for(const it of s.items){
-      salesRows.push({
-        Date: s.date,
-        Customer: s.customer,
-        Mobile: s.mobile,
-        Address: s.address || "",
-        MedicineID: it.medId,
-        Medicine: it.medName,
-        Qty: it.qty
-      });
-    }
-  }
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(meds), "Medicines");
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cust), "Customers");
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(salesRows), "Sales");
-
-  XLSX.writeFile(wb, "Shifa-ul-Dahar_Records.xlsx");
-});
-
-/* =========================
-   Clear All
-========================= */
-document.getElementById("btnClearAll").addEventListener("click", () => {
-  if(!confirm("This will delete ALL medicines, customers and sales. Continue?")) return;
-  state = { medicines: [], customers: [], sales: [] };
-  currentSaleItems = [];
-  saveState();
-  renderAll();
-  resetMedicineFormToNew();
-});
-
-/* =========================
-   Render All
-========================= */
-function renderAll(){
-  renderMedicines();
-  renderCustomers();
-  renderSalesHistory();
-  renderCurrentSaleItems();
-  resetIfFormInInvalidState();
-}
-
-function resetIfFormInInvalidState(){
-  // If current medicine id empty, set new
-  if(!el_mId.value) resetMedicineFormToNew();
-
-  // Refresh dropdown text with current stock numbers
-  renderSalesMedicineDropdown();
-}
-
-/* =========================
-   Security: escape HTML
-========================= */
-function escapeHtml(str){
-  return String(str)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-/* =========================
-   Initial
-========================= */
-resetMedicineFormToNew();
-renderAll();
-</script>
+  <!-- ✅ IMPORTANT: app.js at end -->
+  <script src="./app.js"></script>
 </body>
 </html>
