@@ -10,64 +10,75 @@
 
   <style>
     :root{
-      --bg: #0b2f2c;
+      --bg: #071f1d;
       --card:#0f3a35;
       --line: rgba(255, 210, 102, .22);
       --text: #eaf3f1;
-      --muted: rgba(234,243,241,.7);
+      --muted: rgba(234,243,241,.72);
       --accent:#f2c15b;
       --accent2:#ffd88a;
       --danger:#ff5c5c;
       --ok:#39d98a;
       --shadow: 0 18px 48px rgba(0,0,0,.35);
+      --glass: rgba(15,58,53,.68);
+      --glass2: rgba(6,31,29,.55);
+      --ring: rgba(242,193,91,.35);
     }
 
     *{box-sizing:border-box}
+    html,body{height:100%}
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background: radial-gradient(1200px 700px at 20% 0%, rgba(242,193,91,.12), transparent 55%),
-                  radial-gradient(900px 600px at 100% 10%, rgba(242,193,91,.08), transparent 50%),
-                  linear-gradient(180deg, var(--bg), #061f1d 70%);
+      background:
+        radial-gradient(1200px 700px at 18% 0%, rgba(242,193,91,.14), transparent 58%),
+        radial-gradient(900px 600px at 100% 10%, rgba(242,193,91,.10), transparent 56%),
+        linear-gradient(180deg, #0b2f2c, var(--bg) 70%);
       color: var(--text);
       min-height:100vh;
+      overflow-x:hidden;
     }
 
     .topbar{
       position:sticky; top:0; z-index:10;
-      backdrop-filter: blur(10px);
-      background: linear-gradient(180deg, rgba(11,47,44,.92), rgba(11,47,44,.65));
+      backdrop-filter: blur(12px);
+      background: linear-gradient(180deg, rgba(11,47,44,.94), rgba(11,47,44,.64));
       border-bottom: 1px solid var(--line);
     }
 
-    .wrap{max-width:1100px;margin:0 auto;padding:18px 16px;}
+    .wrap{max-width:1180px;margin:0 auto;padding:18px 16px;}
     .brand{display:flex;align-items:center;justify-content:space-between;gap:12px;}
-    .brand h1{margin:0;letter-spacing:.6px;font-size:18px;font-weight:800;}
-    .brand small{display:block;color:var(--muted);font-weight:600;margin-top:3px;}
+    .brand h1{margin:0;letter-spacing:.7px;font-size:18px;font-weight:950;}
+    .brand small{display:block;color:var(--muted);font-weight:750;margin-top:3px;}
 
     .btnrow{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
     .btn{
-      border:1px solid var(--line);
+      border:1px solid rgba(242,193,91,.22);
       background: linear-gradient(180deg, rgba(242,193,91,.18), rgba(15,58,53,.0));
       color:var(--text);
       padding:10px 12px;
       border-radius:12px;
       cursor:pointer;
-      font-weight:750;
-      letter-spacing:.2px;
-      transition: transform .08s ease, border-color .2s ease, box-shadow .2s ease;
-      box-shadow: 0 8px 20px rgba(0,0,0,.22);
+      font-weight:850;
+      letter-spacing:.25px;
+      transition: transform .08s ease, border-color .2s ease, box-shadow .2s ease, filter .2s ease;
+      box-shadow: 0 10px 22px rgba(0,0,0,.22);
       user-select:none;
     }
-    .btn:hover{transform: translateY(-1px); border-color: rgba(242,193,91,.5)}
+    .btn:hover{transform: translateY(-1px); border-color: rgba(242,193,91,.55); filter:brightness(1.03)}
+    .btn:active{transform: translateY(0px); filter:brightness(.98)}
     .btn.primary{
-      background: linear-gradient(180deg, rgba(242,193,91,.55), rgba(242,193,91,.16));
-      border-color: rgba(242,193,91,.65);
+      background: linear-gradient(180deg, rgba(242,193,91,.70), rgba(242,193,91,.18));
+      border-color: rgba(242,193,91,.72);
       color:#082421;
     }
     .btn.danger{
       background: linear-gradient(180deg, rgba(255,92,92,.25), rgba(15,58,53,.0));
-      border-color: rgba(255,92,92,.35);
+      border-color: rgba(255,92,92,.38);
+    }
+    .btn.ok{
+      background: linear-gradient(180deg, rgba(57,217,138,.25), rgba(15,58,53,.0));
+      border-color: rgba(57,217,138,.40);
     }
 
     .tabs{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
@@ -75,20 +86,22 @@
       padding:10px 12px;border-radius:14px;cursor:pointer;
       border:1px solid var(--line);
       background: rgba(15,58,53,.45);
-      font-weight:800;color:var(--muted);
+      font-weight:900;color:rgba(234,243,241,.72);
+      transition:.15s ease;
     }
+    .tab:hover{border-color: rgba(242,193,91,.45)}
     .tab.active{
       color:#082421;
-      background: linear-gradient(180deg, rgba(242,193,91,.62), rgba(242,193,91,.20));
-      border-color: rgba(242,193,91,.7);
+      background: linear-gradient(180deg, rgba(242,193,91,.66), rgba(242,193,91,.20));
+      border-color: rgba(242,193,91,.74);
       box-shadow: var(--shadow);
     }
 
-    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;margin-top:16px}
-    @media (max-width: 900px){ .grid{grid-template-columns:1fr;} }
+    .grid{display:grid;grid-template-columns:1.06fr .94fr;gap:16px;margin-top:16px}
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr;} }
 
     .card{
-      background: linear-gradient(180deg, rgba(15,58,53,.72), rgba(12,51,47,.55));
+      background: linear-gradient(180deg, rgba(15,58,53,.74), rgba(12,51,47,.56));
       border: 1px solid var(--line);
       border-radius: 18px;
       box-shadow: var(--shadow);
@@ -99,13 +112,13 @@
       border-bottom:1px solid var(--line);
       display:flex;align-items:center;justify-content:space-between;gap:12px;
     }
-    .card .hd h2{margin:0;font-size:14px;letter-spacing:.4px;font-weight:900}
+    .card .hd h2{margin:0;font-size:13px;letter-spacing:.45px;font-weight:950;text-transform:uppercase}
     .card .bd{padding:14px}
 
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    @media (max-width: 520px){ .row{grid-template-columns:1fr;} }
+    @media (max-width: 560px){ .row{grid-template-columns:1fr;} }
 
-    label{display:block;font-size:12px;color:var(--muted);font-weight:800;margin-bottom:6px}
+    label{display:block;font-size:12px;color:var(--muted);font-weight:900;margin-bottom:6px;letter-spacing:.2px}
     input, textarea, select{
       width:100%;
       padding:11px 12px;
@@ -114,18 +127,31 @@
       outline:none;
       background: rgba(6,31,29,.55);
       color: var(--text);
-      font-weight:700;
+      font-weight:800;
+      transition: border-color .18s ease, box-shadow .18s ease;
+    }
+    input:focus, textarea:focus, select:focus{
+      border-color: rgba(242,193,91,.62);
+      box-shadow: 0 0 0 4px rgba(242,193,91,.12);
     }
     textarea{min-height:88px;resize:vertical}
-    input::placeholder, textarea::placeholder{color:rgba(234,243,241,.45)}
+    input::placeholder, textarea::placeholder{color:rgba(234,243,241,.42)}
+    input[disabled]{opacity:.9}
 
     .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
     .hint{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.45;}
 
-    table{width:100%;border-collapse: collapse;font-size:13px;}
-    th, td{padding:10px 10px;border-bottom:1px solid rgba(242,193,91,.18);vertical-align:top;}
-    th{color:var(--accent2);text-align:left;font-weight:900;letter-spacing:.25px}
-    td{color:rgba(234,243,241,.9);font-weight:650}
+    table{width:100%;border-collapse: collapse;font-size:12.5px;}
+    th, td{padding:9px 10px;border-bottom:1px solid rgba(242,193,91,.18);vertical-align:top;}
+    th{
+      color:var(--accent2);
+      text-align:left;
+      font-weight:950;
+      letter-spacing:.25px;
+      text-transform:uppercase;
+      font-size:11.5px;
+    }
+    td{color:rgba(234,243,241,.92);font-weight:750}
 
     .pill{
       display:inline-flex;align-items:center;gap:8px;
@@ -133,79 +159,164 @@
       border:1px solid rgba(242,193,91,.25);
       background: rgba(242,193,91,.08);
       color: var(--accent2);
-      font-weight:900;font-size:12px;
+      font-weight:950;font-size:12px;
       white-space:nowrap;
     }
     .status-ok{border-color: rgba(57,217,138,.35); background: rgba(57,217,138,.08); color: rgba(57,217,138,.95)}
     .status-bad{border-color: rgba(255,92,92,.35); background: rgba(255,92,92,.08); color: rgba(255,92,92,.95)}
 
     .split{display:flex; gap:10px; align-items:center; flex-wrap:wrap;justify-content:flex-end;}
-    .mini{padding:8px 10px;border-radius:12px;font-size:12px;font-weight:850;}
+    .mini{padding:8px 10px;border-radius:12px;font-size:12px;font-weight:950;}
 
     .badge{
       font-size:12px;
-      color:rgba(234,243,241,.85);
+      color:rgba(234,243,241,.88);
       border:1px solid rgba(242,193,91,.25);
       background: rgba(242,193,91,.06);
       padding:6px 10px;
       border-radius: 999px;
-      font-weight:800;
+      font-weight:900;
     }
     .right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+
+    /* DASHBAR */
+    .dash{
+      display:flex;flex-wrap:wrap;gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      margin-top:12px;
+      padding:12px;
+      border:1px solid rgba(242,193,91,.18);
+      border-radius:16px;
+      background: radial-gradient(900px 220px at 18% 0%, rgba(242,193,91,.18), transparent 70%),
+                  linear-gradient(180deg, rgba(15,58,53,.62), rgba(6,31,29,.35));
+      box-shadow: 0 16px 44px rgba(0,0,0,.22);
+    }
+    .dashLeft{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .dashRight{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end}
+    .kpi{
+      border:1px solid rgba(242,193,91,.22);
+      background: rgba(6,31,29,.35);
+      border-radius: 14px;
+      padding:10px 12px;
+      min-width: 180px;
+    }
+    .kpi b{display:block;font-size:12px;letter-spacing:.25px;color:rgba(234,243,241,.75);font-weight:950;text-transform:uppercase}
+    .kpi span{display:block;margin-top:6px;font-size:16px;font-weight:1000;letter-spacing:.3px;color:var(--accent2)}
+    .kpi small{display:block;margin-top:4px;color:rgba(234,243,241,.68);font-weight:850}
+
+    /* Auth modal */
+    .modal{
+      position:fixed; inset:0;
+      display:none;
+      align-items:center; justify-content:center;
+      background: rgba(0,0,0,.55);
+      z-index: 9998;
+      padding: 18px;
+    }
+    .modal.show{display:flex}
+    .modalCard{
+      width:min(520px, 100%);
+      border-radius: 18px;
+      border:1px solid rgba(242,193,91,.25);
+      background:
+        radial-gradient(900px 260px at 20% 0%, rgba(242,193,91,.22), transparent 65%),
+        linear-gradient(180deg, rgba(15,58,53,.94), rgba(6,31,29,.92));
+      box-shadow: 0 26px 90px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .modalHd{
+      padding: 14px 14px 10px 14px;
+      border-bottom:1px solid rgba(242,193,91,.18);
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+    }
+    .modalHd h3{margin:0;font-size:13px;letter-spacing:.4px;font-weight:1000;text-transform:uppercase;color:var(--accent2)}
+    .modalBd{padding:14px}
+    .modalNote{margin-top:10px;color:rgba(234,243,241,.7);font-weight:800;font-size:12px;line-height:1.45}
+    .xbtn{
+      border:1px solid rgba(242,193,91,.22);
+      background: rgba(6,31,29,.45);
+      color: rgba(234,243,241,.9);
+      width:36px;height:36px;border-radius: 12px;
+      cursor:pointer;
+      font-weight:1000;
+    }
+    .xbtn:hover{border-color: rgba(242,193,91,.55)}
 
     /* WOW TOAST */
     .toast{
       position: fixed;
       right: 16px;
       bottom: 16px;
-      width: min(440px, calc(100vw - 32px));
+      width: min(460px, calc(100vw - 32px));
       display:none;
       z-index: 9999;
     }
     .toast.show{display:block}
     .toastCard{
       border-radius: 18px;
-      border: 1px solid rgba(242,193,91,.25);
-      background: radial-gradient(800px 220px at 20% 0%, rgba(242,193,91,.22), transparent 65%),
-                  linear-gradient(180deg, rgba(15,58,53,.95), rgba(6,31,29,.88));
-      box-shadow: 0 22px 70px rgba(0,0,0,.45);
+      border: 1px solid rgba(242,193,91,.26);
+      background:
+        radial-gradient(900px 260px at 18% 0%, rgba(242,193,91,.24), transparent 62%),
+        linear-gradient(180deg, rgba(15,58,53,.96), rgba(6,31,29,.90));
+      box-shadow: 0 26px 90px rgba(0,0,0,.55);
       overflow:hidden;
-      transform: translateY(6px);
-      animation: pop .18s ease-out forwards;
+      transform: translateY(8px) scale(.98);
+      opacity:.0;
+      animation: toastIn .20s ease-out forwards;
     }
-    @keyframes pop{ to{ transform: translateY(0);} }
+    @keyframes toastIn{
+      to{ transform: translateY(0) scale(1); opacity:1; }
+    }
     .toastTop{
-      display:flex; gap:10px; align-items:flex-start;
+      display:flex; gap:12px; align-items:flex-start;
       padding: 12px 12px 10px 12px;
     }
     .toastIcon{
-      height: 36px; width:36px; border-radius: 12px;
+      height: 40px; width:40px; border-radius: 14px;
       display:flex; align-items:center; justify-content:center;
       font-weight: 1000;
       border:1px solid rgba(242,193,91,.22);
       background: rgba(242,193,91,.10);
       flex: 0 0 auto;
+      font-size:18px;
     }
     .toastMain{flex:1; min-width: 0;}
     .toastTitle{
       font-size: 13px;
-      font-weight: 950;
-      letter-spacing: .2px;
+      font-weight: 1000;
+      letter-spacing: .25px;
       margin: 0 0 4px 0;
       color: var(--accent2);
+      text-transform:uppercase;
     }
     .toastMsg{
       font-size: 12px;
-      font-weight: 780;
+      font-weight: 850;
       color: rgba(234,243,241,.92);
       white-space: pre-line;
       line-height: 1.35;
       margin: 0;
       overflow-wrap: anywhere;
     }
+    .toastRight{
+      flex:0 0 auto;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .toastClose{
+      width:34px;height:34px;border-radius:12px;
+      border:1px solid rgba(242,193,91,.20);
+      background: rgba(6,31,29,.42);
+      color: rgba(234,243,241,.92);
+      cursor:pointer;
+      font-weight:1000;
+    }
+    .toastClose:hover{border-color: rgba(242,193,91,.55)}
     .toastBar{
       height: 3px;
-      background: rgba(242,193,91,.22);
+      background: rgba(242,193,91,.18);
       position: relative;
       overflow:hidden;
     }
@@ -213,8 +324,8 @@
       display:block; height:100%;
       width: 100%;
       transform: translateX(-100%);
-      background: linear-gradient(90deg, rgba(242,193,91,.0), rgba(242,193,91,.9), rgba(57,217,138,.9));
-      animation: bar 3.5s linear forwards;
+      background: linear-gradient(90deg, rgba(242,193,91,.0), rgba(242,193,91,.95), rgba(57,217,138,.95));
+      animation: bar 4.2s linear forwards;
     }
     @keyframes bar{ to{ transform: translateX(0%);} }
 
@@ -228,11 +339,13 @@
       background: rgba(255,92,92,.12);
       color: rgba(255,92,92,.95);
     }
-    .toast.ok .toastTitle{ color: rgba(57,217,138,.95); }
-    .toast.bad .toastTitle{ color: rgba(255,92,92,.95); }
+    .toast.ok .toastTitle{ color: rgba(57,217,138,.98); }
+    .toast.bad .toastTitle{ color: rgba(255,92,92,.98); }
 
     @media print{
       .no-print{display:none !important}
+      body{background:#fff !important; color:#000 !important}
+      .card{box-shadow:none !important}
     }
   </style>
 </head>
@@ -247,8 +360,11 @@
         </div>
 
         <div class="right no-print">
+          <span class="badge" id="authBadge">Auth: Checking…</span>
           <span class="badge" id="connBadge">Connecting…</span>
           <div class="btnrow">
+            <button class="btn" id="btnLoginOpen">Login</button>
+            <button class="btn ok" id="btnLogout" style="display:none">Logout</button>
             <button class="btn" id="btnExport">Export Excel (.xlsx)</button>
             <button class="btn" id="btnDebug">Debug</button>
             <button class="btn danger" id="btnClearAll">Clear All Data</button>
@@ -417,13 +533,38 @@
 
     <!-- SALES -->
     <section id="tab-sale" class="tabpane" style="display:none">
+
+      <div class="dash no-print">
+        <div class="dashLeft">
+          <span class="pill" id="liveClockPill">Clock: --</span>
+          <span class="pill" id="saleCountPill">0 sales</span>
+          <span class="pill" id="saleItemsPill">0 items</span>
+        </div>
+        <div class="dashRight">
+          <div class="kpi">
+            <b>Today Revenue</b>
+            <span id="kpiToday">PKR 0</span>
+            <small id="kpiTodayMeta">0 sales today</small>
+          </div>
+          <div class="kpi">
+            <b>Monthly Revenue</b>
+            <span id="kpiMonth">PKR 0</span>
+            <small id="kpiMonthMeta">0 sales this month</small>
+          </div>
+          <div class="kpi">
+            <b>Overall Revenue</b>
+            <span id="kpiAll">PKR 0</span>
+            <small id="kpiAllMeta">All-time</small>
+          </div>
+        </div>
+      </div>
+
       <div class="grid">
 
         <div class="card">
           <div class="hd">
             <h2>Sale Entry (Multiple Items Allowed)</h2>
             <div class="split no-print">
-              <span class="pill" id="saleCountPill">0 sales</span>
               <button class="btn mini" id="btnPrintSales">Print Sales</button>
             </div>
           </div>
@@ -444,6 +585,17 @@
             <div style="margin-top:12px">
               <label>Address</label>
               <input id="sAddress" placeholder="Address..." />
+            </div>
+
+            <div class="row" style="margin-top:12px">
+              <div>
+                <label>Charged Amount (PKR) — Manual (Revenue)</label>
+                <input id="sCharged" type="number" min="0" placeholder="e.g. 1500" />
+              </div>
+              <div>
+                <label>Payment Note (optional)</label>
+                <input id="sPayNote" placeholder="e.g. cash / online / partial info (optional)" />
+              </div>
             </div>
 
             <div style="margin-top:12px">
@@ -472,16 +624,25 @@
 
             <div class="hint">
               • Add multiple items then finalize once.<br/>
-              • Finalize saves to Firestore instantly.
+              • Charged Amount (PKR) is your revenue entry for this customer (manual).<br/>
+              • Finalize saves + stock updates in Firestore.
             </div>
           </div>
         </div>
 
         <div class="card">
           <div class="hd">
-            <h2>Current Sale Items</h2>
-            <div class="pill" id="saleItemsPill">0 items</div>
+            <h2>Sales & Items</h2>
+            <div class="split no-print">
+              <span class="pill" id="filterRevenuePill">Filter Revenue: PKR 0</span>
+              <select id="salesFilter" style="max-width:220px">
+                <option value="today">Today</option>
+                <option value="month">This Month</option>
+                <option value="all" selected>All</option>
+              </select>
+            </div>
           </div>
+
           <div class="bd">
             <table id="saleItemsTable">
               <thead>
@@ -497,8 +658,8 @@
 
             <hr style="border:0;border-top:1px solid var(--line);margin:14px 0" />
 
-            <h3 style="margin:0 0 10px 0;font-size:13px;color:var(--accent2);letter-spacing:.3px">
-              Sales History
+            <h3 style="margin:0 0 10px 0;font-size:13px;color:var(--accent2);letter-spacing:.35px;font-weight:1000;text-transform:uppercase">
+              Sales History (Charged PKR)
             </h3>
 
             <div id="salesPrintArea">
@@ -508,6 +669,7 @@
                     <th>Date</th>
                     <th>Customer</th>
                     <th>Mobile</th>
+                    <th>Charged (PKR)</th>
                     <th>Items</th>
                     <th>Notes</th>
                   </tr>
@@ -523,6 +685,37 @@
     </section>
   </div>
 
+  <!-- AUTH MODAL (LOGIN ONLY) -->
+  <div class="modal" id="authModal">
+    <div class="modalCard">
+      <div class="modalHd">
+        <h3>Authorized Login</h3>
+        <button class="xbtn" id="btnAuthClose">×</button>
+      </div>
+      <div class="modalBd">
+        <div class="row">
+          <div>
+            <label>Email</label>
+            <input id="authEmail" type="email" placeholder="you@example.com" />
+          </div>
+          <div>
+            <label>Password</label>
+            <input id="authPass" type="password" placeholder="••••••••" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" id="btnAuthLogin">Login</button>
+        </div>
+
+        <div class="modalNote">
+          <b>Only Authorized Users:</b> Accounts must be created in <b>Firebase Console → Authentication</b>.
+          (Email/Password must be enabled)
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- WOW Toast -->
   <div class="toast" id="toast">
     <div class="toastCard">
@@ -531,6 +724,9 @@
         <div class="toastMain">
           <div class="toastTitle" id="toastTitle">Done</div>
           <p class="toastMsg" id="toastMsg"></p>
+        </div>
+        <div class="toastRight">
+          <button class="toastClose" id="toastClose">×</button>
         </div>
       </div>
       <div class="toastBar"><i id="toastBar"></i></div>

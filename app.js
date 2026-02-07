@@ -1,7 +1,14 @@
 // =========================
-// FIREBASE (Firestore realtime) - WOW + Auto Next ID from Firebase
+// FIREBASE (Firestore realtime) + AUTH (Email/Password) — LOGIN ONLY
 // =========================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
 import {
   getFirestore,
   collection, doc, setDoc, getDocs,
@@ -29,18 +36,19 @@ const LOGO_URL = "https://raw.githubusercontent.com/shifauldahar/Record-keeping/
 window.addEventListener("error", (e) => {
   const msg = `JS Error:\n${e.message}\n${e.filename || "?"}:${e.lineno || "?"}:${e.colno || "?"}`;
   console.error(e.error || e);
-  wowToast("Error", msg, false, 10000);
+  wowToast("Error", msg, false, 15000);
 });
 window.addEventListener("unhandledrejection", (e) => {
   const reason = e.reason?.message || String(e.reason || "Unknown rejection");
   console.error(e.reason || e);
-  wowToast("Promise Error", reason, false, 10000);
+  wowToast("Promise Error", reason, false, 15000);
 });
 
 // =========================
 // WOW TOAST
 // =========================
-function wowToast(title, msg, ok = true, ms = 10000) {
+let toastTimer = null;
+function wowToast(title, msg, ok = true, ms = 4200) {
   const wrap = document.getElementById("toast");
   if (!wrap) { alert(title + "\n" + msg); return; }
 
@@ -55,18 +63,34 @@ function wowToast(title, msg, ok = true, ms = 10000) {
   tTitle.textContent = title || (ok ? "Done" : "Error");
   tMsg.textContent = msg || "";
   tIcon.textContent = ok ? "✓" : "!";
+
   tBar.style.animation = "none";
   void tBar.offsetWidth; // restart animation
   tBar.style.animation = "";
 
   wrap.classList.add("show");
-  setTimeout(() => wrap.classList.remove("show"), ms);
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => wrap.classList.remove("show"), ms);
 }
 
+document.getElementById("toastClose")?.addEventListener("click", () => {
+  document.getElementById("toast")?.classList.remove("show");
+});
+
+// =========================
+// Small UI helpers
+// =========================
 function setConn(status, ok) {
   const b = document.getElementById("connBadge");
   if (!b) return;
   b.textContent = status;
+  b.style.borderColor = ok ? "rgba(57,217,138,.35)" : "rgba(255,92,92,.35)";
+}
+
+function setAuthBadge(text, ok) {
+  const b = document.getElementById("authBadge");
+  if (!b) return;
+  b.textContent = text;
   b.style.borderColor = ok ? "rgba(57,217,138,.35)" : "rgba(255,92,92,.35)";
 }
 
@@ -83,34 +107,64 @@ function escapeHtml(str) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+
 function nowStr() {
   const d = new Date();
-  return d.toISOString().slice(0, 19).replace("T", " ");
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  const ss = String(d.getSeconds()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+}
+
+function parseLocalDateFromSaleStr(s) {
+  if (!s) return null;
+  const t = String(s).replace(" ", "T");
+  const d = new Date(t);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function pk(n) {
+  const x = Number(n || 0);
+  const safe = Number.isFinite(x) ? x : 0;
+  return "PKR " + safe.toLocaleString("en-PK");
 }
 
 function explainFirestoreError(err) {
   const code = err?.code || "";
   const msg = err?.message || String(err || "Unknown error");
-
   if (code === "permission-denied") {
-    return `PERMISSION DENIED (Firestore Rules)\nFix:\nFirestore Console → Rules → allow read/write (testing).`;
+    return `PERMISSION DENIED\nFix:\nFirestore Rules → allow read/write for request.auth != null`;
   }
   if (code === "failed-precondition" && msg.toLowerCase().includes("index")) {
-    return `MISSING INDEX (Firestore)\nFix:\nOpen Console(F12) error → click "create index" link.`;
+    return `MISSING INDEX\nFix:\nConsole error → click "create index" link.`;
   }
   if (code === "unavailable") {
-    return `Firestore UNAVAILABLE\nFix:\nCheck internet / adblock / VPN / https.`;
+    return `Firestore UNAVAILABLE\nFix:\nInternet / adblock / VPN / https.`;
   }
   return `Firestore Error:\n${code ? `Code: ${code}\n` : ""}${msg}`;
+}
+
+function explainAuthError(err) {
+  const code = err?.code || "";
+  if (code.includes("auth/invalid-credential")) return "Invalid email or password.";
+  if (code.includes("auth/user-not-found")) return "User not found (not authorized).";
+  if (code.includes("auth/wrong-password")) return "Wrong password.";
+  if (code.includes("auth/invalid-email")) return "Invalid email format.";
+  if (code.includes("auth/too-many-requests")) return "Too many attempts. Try again later.";
+  return err?.message || String(err || "Auth error");
 }
 
 // =========================
 // Firebase Init
 // =========================
-let app, db;
+let app, db, auth;
 try {
   app = initializeApp(firebaseConfig);
   db = getFirestore(app);
+  auth = getAuth(app);
 } catch (err) {
   setConn("Firebase init failed ❌", false);
   wowToast("Firebase Init Failed", err?.message || String(err), false, 12000);
@@ -123,7 +177,9 @@ try {
 let state = { medicines: [], customers: [], sales: [] };
 let currentSaleItems = [];
 let connectedOnce = false;
-let medicinesLoadedOnce = false; // IMPORTANT for first-load next ID
+let medicinesLoadedOnce = false;
+let realtimeUnsubs = [];
+let currentUser = null;
 
 // =========================
 // DOM helper
@@ -152,9 +208,26 @@ const el_cAddress = $("cAddress");
 const el_sCustomer = $("sCustomer");
 const el_sMobile = $("sMobile");
 const el_sAddress = $("sAddress");
+const el_sCharged = $("sCharged");
+const el_sPayNote = $("sPayNote");
 const el_sNote = $("sNote");
 const el_sMedSelect = $("sMedSelect");
 const el_sQty = $("sQty");
+
+// KPI refs
+const el_kpiToday = $("kpiToday");
+const el_kpiMonth = $("kpiMonth");
+const el_kpiAll = $("kpiAll");
+const el_kpiTodayMeta = $("kpiTodayMeta");
+const el_kpiMonthMeta = $("kpiMonthMeta");
+const el_kpiAllMeta = $("kpiAllMeta");
+const el_filterRevenuePill = $("filterRevenuePill");
+const el_salesFilter = $("salesFilter");
+
+// Auth modal refs
+const authModal = $("authModal");
+const authEmail = $("authEmail");
+const authPass = $("authPass");
 
 // =========================
 // Helpers
@@ -173,7 +246,6 @@ function computeNextMedicineIdFromState() {
   return pad3(max + 1) || "001";
 }
 
-// ✅ This one sets the form to (max+1) from Firestore data
 function setMedicineFormToNextFromFirebase() {
   const nextId = computeNextMedicineIdFromState();
   el_mId.value = nextId;
@@ -196,6 +268,30 @@ function fillMedicineForm(m) {
   $("nextIdPill").textContent = "Loaded ID: " + m.id;
 }
 
+function clearSaleForm(keepCustomer = false) {
+  currentSaleItems = [];
+  if (!keepCustomer) {
+    el_sCustomer.value = "";
+    el_sMobile.value = "";
+    el_sAddress.value = "";
+  }
+  el_sCharged.value = "";
+  el_sPayNote.value = "";
+  el_sNote.value = "";
+  el_sQty.value = "";
+  renderCurrentSaleItems();
+}
+
+function isSameDay(a, b) {
+  return a.getFullYear() === b.getFullYear() &&
+         a.getMonth() === b.getMonth() &&
+         a.getDate() === b.getDate();
+}
+function isSameMonth(a, b) {
+  return a.getFullYear() === b.getFullYear() &&
+         a.getMonth() === b.getMonth();
+}
+
 // =========================
 // Tabs
 // =========================
@@ -210,12 +306,122 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
 }));
 
 // =========================
+// Live Clock
+// =========================
+function startLiveClock() {
+  const pill = document.getElementById("liveClockPill");
+  if (!pill) return;
+  const tick = () => pill.textContent = "Clock: " + new Date().toLocaleString();
+  tick();
+  setInterval(tick, 1000);
+}
+
+// =========================
+// AUTH (Login Gate) — LOGIN ONLY
+// =========================
+function openAuthModal() {
+  authModal.classList.add("show");
+  authEmail.focus();
+}
+function closeAuthModal() {
+  authModal.classList.remove("show");
+}
+
+$("btnLoginOpen").addEventListener("click", openAuthModal);
+$("btnAuthClose").addEventListener("click", closeAuthModal);
+authModal.addEventListener("click", (e) => {
+  if (e.target === authModal) closeAuthModal();
+});
+
+// Enter key => login
+[authEmail, authPass].forEach(el => {
+  el.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") $("btnAuthLogin").click();
+  });
+});
+
+$("btnAuthLogin").addEventListener("click", async () => {
+  try {
+    const email = authEmail.value.trim();
+    const pass = authPass.value;
+    if (!email) throw new Error("Email required.");
+    if (!pass) throw new Error("Password required.");
+    await signInWithEmailAndPassword(auth, email, pass);
+    wowToast("Login Success ✅", "Access granted.", true, 2500);
+    closeAuthModal();
+  } catch (err) {
+    wowToast("Login Failed", explainAuthError(err), false, 9000);
+  }
+});
+
+$("btnLogout").addEventListener("click", async () => {
+  try {
+    await signOut(auth);
+    wowToast("Logged Out", "You have been signed out.", true, 2200);
+  } catch (err) {
+    wowToast("Logout Failed", explainAuthError(err), false, 8000);
+  }
+});
+
+// Lock UI when not authed
+function setAppLocked(locked) {
+  const disableIds = [
+    "btnExport","btnDebug","btnClearAll",
+    "btnPrintMedicine","btnSaveMedicine","btnNewMedicine","btnSearchMedicine",
+    "btnSaveCustomer","btnResetCustomer",
+    "btnAddSaleItem","btnFinalizeSale","btnResetSale","btnPrintSales"
+  ];
+
+  disableIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = locked;
+  });
+
+  const inputs = document.querySelectorAll("input, textarea, select");
+  inputs.forEach(el => {
+    if (["authEmail","authPass"].includes(el.id)) return;
+    el.disabled = locked;
+  });
+}
+
+// Auth watcher
+onAuthStateChanged(auth, (user) => {
+  currentUser = user || null;
+
+  if (!user) {
+    setAuthBadge("Auth: Locked 🔒", false);
+    document.getElementById("btnLogout").style.display = "none";
+    document.getElementById("btnLoginOpen").style.display = "";
+    setAppLocked(true);
+    stopRealtime();
+    setConn("Disconnected ❌", false);
+    wowToast("Login Required", "Only authorized users can access records.", false, 4500);
+    return;
+  }
+
+  setAuthBadge("Auth: " + (user.email || "User") + " ✅", true);
+  document.getElementById("btnLogout").style.display = "";
+  document.getElementById("btnLoginOpen").style.display = "none";
+  setAppLocked(false);
+
+  startRealtime();
+});
+
+// =========================
 // Realtime listeners
 // =========================
+function stopRealtime() {
+  realtimeUnsubs.forEach(fn => { try{ fn(); }catch(_){} });
+  realtimeUnsubs = [];
+  connectedOnce = false;
+  medicinesLoadedOnce = false;
+}
+
 function startRealtime() {
+  stopRealtime();
   setConn("Connecting…", true);
 
-  onSnapshot(
+  realtimeUnsubs.push(onSnapshot(
     query(collection(db, "medicines"), orderBy("id", "asc")),
     (snap) => {
       state.medicines = snap.docs.map(d => {
@@ -226,12 +432,10 @@ function startRealtime() {
       renderMedicines();
       renderSalesMedicineDropdown();
 
-      // ✅ FIRST OPEN: After medicines loaded from Firebase, auto set next ID
       if (!medicinesLoadedOnce) {
         medicinesLoadedOnce = true;
         setMedicineFormToNextFromFirebase();
       } else {
-        // Keep pills updated if not searching an older ID
         const loaded = findMedicineById(el_mId.value);
         if (!loaded) $("nextIdPill").textContent = "Next ID: " + computeNextMedicineIdFromState();
       }
@@ -239,9 +443,9 @@ function startRealtime() {
       if (!connectedOnce) finishConnected("medicines");
     },
     (err) => realtimeFail("medicines", err)
-  );
+  ));
 
-  onSnapshot(
+  realtimeUnsubs.push(onSnapshot(
     query(collection(db, "customers"), orderBy("mobile", "asc")),
     (snap) => {
       state.customers = snap.docs.map(d => {
@@ -253,37 +457,39 @@ function startRealtime() {
       if (!connectedOnce) finishConnected("customers");
     },
     (err) => realtimeFail("customers", err)
-  );
+  ));
 
   trySalesListenerPrimary();
 }
 
 function trySalesListenerPrimary() {
-  onSnapshot(
+  realtimeUnsubs.push(onSnapshot(
     query(collection(db, "sales"), orderBy("createdAt", "desc")),
     (snap) => {
       state.sales = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderSalesHistory();
+      renderRevenueKpis();
       if (!connectedOnce) finishConnected("sales");
     },
     (err) => {
       console.warn("Sales primary listener failed, fallback:", err);
-      wowToast("Sales Listener", "Fallback enabled.\n" + explainFirestoreError(err), false, 7000);
+      wowToast("Sales Listener", "Fallback enabled.\n" + explainFirestoreError(err), false, 2500);
       trySalesListenerFallback();
     }
-  );
+  ));
 }
 function trySalesListenerFallback() {
-  onSnapshot(
+  realtimeUnsubs.push(onSnapshot(
     query(collection(db, "sales"), orderBy("date", "desc")),
     (snap) => {
       state.sales = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderSalesHistory();
+      renderRevenueKpis();
       if (!connectedOnce) finishConnected("sales");
-      wowToast("Sales Fallback", "Using date order. CreatedAt index optional.", true, 5500);
+      wowToast("Sales Fallback", "Using date order. CreatedAt index optional.", true, 3000);
     },
     (err) => realtimeFail("sales(fallback)", err)
-  );
+  ));
 }
 
 function realtimeFail(name, err) {
@@ -295,7 +501,7 @@ function realtimeFail(name, err) {
 function finishConnected(sourceName) {
   connectedOnce = true;
   setConn("Connected ✅", true);
-  wowToast("Connected ✅", `Listener: ${sourceName}`, true, 2500);
+  wowToast("Connected ✅", `Listener: ${sourceName}`, true, 2200);
   renderAll();
 }
 
@@ -342,20 +548,13 @@ $("btnSaveMedicine").addEventListener("click", async () => {
       if (!snap.exists()) {
         if (addQty <= 0) throw new Error("For new medicine, add some qty (>0).");
         tx.set(ref, {
-          id,
-          name,
-          note,
+          id, name, note,
           totalQty: addQty,
           availableQty: addQty,
           updatedAt: serverTimestamp(),
         });
       } else {
-        const updates = {
-          id,
-          name,
-          note,
-          updatedAt: serverTimestamp(),
-        };
+        const updates = { id, name, note, updatedAt: serverTimestamp() };
         if (addQty > 0) {
           updates.totalQty = increment(addQty);
           updates.availableQty = increment(addQty);
@@ -364,10 +563,8 @@ $("btnSaveMedicine").addEventListener("click", async () => {
       }
     });
 
-    wowToast("Saved ✅", `Medicine "${name}" saved.\nNext ID ready.`, true, 3200);
+    wowToast("Saved ✅", `Medicine "${name}" saved.\nNext ID ready.`, true, 2600);
 
-    // ✅ After save, jump to next id based on Firebase state max+1
-    // (snapshot will update quickly, but we set immediately for best UX)
     const nextNum = (parseInt(id, 10) || 0) + 1;
     el_mId.value = pad3(nextNum);
     el_mName.value = "";
@@ -401,7 +598,7 @@ $("btnSaveCustomer").addEventListener("click", async () => {
     }, { merge: true });
 
     el_cName.value = ""; el_cMobile.value = ""; el_cAddress.value = "";
-    wowToast("Saved ✅", "Customer saved successfully.", true, 2500);
+    wowToast("Saved ✅", "Customer saved successfully.", true, 2200);
 
   } catch (err) {
     console.error(err);
@@ -411,7 +608,7 @@ $("btnSaveCustomer").addEventListener("click", async () => {
 
 $("btnResetCustomer").addEventListener("click", () => {
   el_cName.value = ""; el_cMobile.value = ""; el_cAddress.value = "";
-  wowToast("Cleared", "Customer form cleared.", true, 1800);
+  wowToast("Cleared", "Customer form cleared.", true, 1600);
 });
 
 // =========================
@@ -456,7 +653,7 @@ $("btnAddSaleItem").addEventListener("click", () => {
 
     el_sQty.value = "";
     renderCurrentSaleItems();
-    wowToast("Added ✅", `${m.name} × ${qty}`, true, 1800);
+    wowToast("Added ✅", `${m.name} × ${qty}`, true, 1700);
 
   } catch (e) {
     wowToast("Add Item Failed", e.message, false, 9000);
@@ -464,14 +661,8 @@ $("btnAddSaleItem").addEventListener("click", () => {
 });
 
 $("btnResetSale").addEventListener("click", () => {
-  currentSaleItems = [];
-  el_sCustomer.value = "";
-  el_sMobile.value = "";
-  el_sAddress.value = "";
-  el_sNote.value = "";
-  el_sQty.value = "";
-  renderCurrentSaleItems();
-  wowToast("Cleared", "Sale form cleared.", true, 1800);
+  clearSaleForm(false);
+  wowToast("Cleared", "Sale form cleared.", true, 1600);
 });
 
 $("btnFinalizeSale").addEventListener("click", async () => {
@@ -480,6 +671,10 @@ $("btnFinalizeSale").addEventListener("click", async () => {
     const mobile = el_sMobile.value.trim();
     const address = el_sAddress.value.trim();
     const note = el_sNote.value.trim();
+    const payNote = el_sPayNote.value.trim();
+
+    const charged = Number(el_sCharged.value || 0);
+    if (!Number.isFinite(charged) || charged < 0) throw new Error("Charged Amount (PKR) must be 0 or more.");
 
     if (!customer) throw new Error("Customer name required.");
     if (!mobile) throw new Error("Mobile required.");
@@ -491,6 +686,9 @@ $("btnFinalizeSale").addEventListener("click", async () => {
       mobile,
       address,
       note,
+      payNote,
+      chargedPKR: charged,
+      currency: "PKR",
       items: currentSaleItems.map(i => ({ medId: pad3(i.medId), medName: i.medName, qty: i.qty }))
     };
 
@@ -518,17 +716,84 @@ $("btnFinalizeSale").addEventListener("click", async () => {
       tx.set(sref, { ...salePayload, createdAt: serverTimestamp() });
     });
 
-    currentSaleItems = [];
-    el_sNote.value = "";
-    el_sQty.value = "";
-    renderCurrentSaleItems();
-    wowToast("Sale Saved ✅", "Stock updated successfully.", true, 3000);
+    clearSaleForm(true);
+    wowToast("Sale Saved ✅", `Stock updated.\nRevenue: ${pk(charged)}`, true, 2600);
 
   } catch (err) {
     console.error(err);
     wowToast("Sale Failed", explainFirestoreError(err), false, 12000);
   }
 });
+
+// Filter changes
+el_salesFilter.addEventListener("change", () => {
+  renderSalesHistory();
+  renderRevenueKpis();
+});
+
+// =========================
+// Revenue KPIs
+// =========================
+function computeRevenue() {
+  const now = new Date();
+  let todaySum = 0, todayCount = 0;
+  let monthSum = 0, monthCount = 0;
+  let allSum = 0;
+
+  for (const s of state.sales) {
+    const charged = Number(s.chargedPKR || 0);
+    if (Number.isFinite(charged)) allSum += charged;
+
+    const d = parseLocalDateFromSaleStr(s.date);
+    if (!d) continue;
+
+    if (isSameDay(d, now)) { todaySum += charged; todayCount++; }
+    if (isSameMonth(d, now)) { monthSum += charged; monthCount++; }
+  }
+
+  return { todaySum, todayCount, monthSum, monthCount, allSum };
+}
+
+function computeFilteredSalesAndRevenue() {
+  const mode = el_salesFilter.value || "all";
+  const now = new Date();
+
+  const filtered = [];
+  let sum = 0;
+
+  for (const s of state.sales) {
+    const d = parseLocalDateFromSaleStr(s.date);
+    const charged = Number(s.chargedPKR || 0);
+
+    let ok = true;
+    if (mode === "today") ok = d ? isSameDay(d, now) : false;
+    else if (mode === "month") ok = d ? isSameMonth(d, now) : false;
+
+    if (ok) {
+      filtered.push(s);
+      if (Number.isFinite(charged)) sum += charged;
+    }
+  }
+
+  return { filtered, sum, mode };
+}
+
+function renderRevenueKpis() {
+  const r = computeRevenue();
+  el_kpiToday.textContent = pk(r.todaySum);
+  el_kpiMonth.textContent = pk(r.monthSum);
+  el_kpiAll.textContent = pk(r.allSum);
+
+  el_kpiTodayMeta.textContent = `${r.todayCount} sales today`;
+  el_kpiMonthMeta.textContent = `${r.monthCount} sales this month`;
+  el_kpiAllMeta.textContent = `All-time: ${state.sales.length} sales`;
+
+  const fr = computeFilteredSalesAndRevenue();
+  const tag = fr.mode === "today" ? "Today"
+           : fr.mode === "month" ? "This Month"
+           : "All";
+  el_filterRevenuePill.textContent = `Filter Revenue (${tag}): ${pk(fr.sum)}`;
+}
 
 // =========================
 // Renderers
@@ -646,7 +911,7 @@ function renderCurrentSaleItems() {
       const i = parseInt(btn.dataset.rm, 10);
       currentSaleItems.splice(i, 1);
       renderCurrentSaleItems();
-      wowToast("Removed", "Item removed from sale.", true, 1800);
+      wowToast("Removed", "Item removed from sale.", true, 1500);
     });
   });
 }
@@ -655,13 +920,18 @@ function renderSalesHistory() {
   const tbody = document.querySelector("#salesTable tbody");
   tbody.innerHTML = "";
 
-  for (const s of state.sales) {
+  const { filtered } = computeFilteredSalesAndRevenue();
+
+  for (const s of filtered) {
     const itemsText = (s.items || []).map(i => `${i.medName} × ${i.qty}`).join(", ");
+    const charged = Number(s.chargedPKR || 0);
+
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${escapeHtml(s.date || "")}</td>
       <td>${escapeHtml(s.customer || "")}</td>
       <td>${escapeHtml(s.mobile || "")}</td>
+      <td><b>${escapeHtml(String(charged))}</b></td>
       <td>${escapeHtml(itemsText)}</td>
       <td>${escapeHtml(s.note || "")}</td>
     `;
@@ -675,7 +945,10 @@ function renderSalesHistory() {
 // Print
 // =========================
 function openPrintWindow({ title, headerTitle, headerSubtitle, extraMetaHtml, bodyHtml }) {
-  const w = window.open("", "_blank", "width=980,height=720");
+  const r = computeRevenue();
+  const printedAt = new Date().toLocaleString();
+
+  const w = window.open("", "_blank", "width=1040,height=760");
   w.document.open();
   w.document.write(`
 <!doctype html>
@@ -684,30 +957,68 @@ function openPrintWindow({ title, headerTitle, headerSubtitle, extraMetaHtml, bo
 <meta charset="utf-8" />
 <title>${escapeHtml(title)}</title>
 <style>
-  body{ font-family: Arial, sans-serif; padding: 20px; color:#000; }
-  .header{ display:flex; gap:12px; align-items:center; border-bottom:2px solid #ddd; padding-bottom:12px; margin-bottom:14px; }
-  .header img{ height:64px; width:auto; object-fit:contain; }
-  .header h1{ margin:0; font-size:18px; }
-  .header small{ display:block; margin-top:4px; color:#444; font-weight:600; }
-  .meta{ margin: 8px 0 14px 0; font-size:12px; color:#333; }
-  table{ width:100%; border-collapse:collapse; font-size:13px; }
-  th, td{ padding:10px; border:1px solid #ddd; text-align:left; vertical-align:top; }
-  th{ background:#f5f5f5; font-weight:700; }
+  *{ box-sizing:border-box; }
+  body{ font-family: "Calibri", Arial, sans-serif; padding: 22px; color:#0b0b0b; }
+  .sheet{
+    border: 4px solid #2f7a60;
+    border-radius: 12px;
+    padding: 18px;
+  }
+  .header{
+    display:flex; gap:14px; align-items:center;
+    border-bottom:2px solid #d7d7d7;
+    padding-bottom:12px;
+    margin-bottom:14px;
+  }
+  .header img{ height:70px; width:auto; object-fit:contain; }
+  .header h1{ margin:0; font-size:18px; letter-spacing:.2px; }
+  .header small{ display:block; margin-top:5px; color:#444; font-weight:600; }
+  .meta{
+    display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    margin: 10px 0 14px 0;
+    font-size:12px; color:#333;
+  }
+  .metaBox{
+    border:1px solid #e2e2e2;
+    border-left:5px solid #f2c15b;
+    padding:10px 12px;
+    border-radius:10px;
+    min-width: 260px;
+    background:#fafafa;
+  }
+  .metaBox b{display:block; font-size:12px; color:#222; margin-bottom:6px}
+  .metaBox span{font-weight:700}
+  table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  th, td{ padding:10px; border:1px solid #dcdcdc; text-align:left; vertical-align:top; }
+  th{ background:#f2f7f4; font-weight:800; text-transform:uppercase; font-size:11.5px; letter-spacing:.25px; }
 </style>
 </head>
 <body>
-  <div class="header">
-    <img src="${LOGO_URL}" alt="Logo" onerror="this.style.display='none'"/>
-    <div>
-      <h1>${escapeHtml(headerTitle)}</h1>
-      <small>${escapeHtml(headerSubtitle)}</small>
+  <div class="sheet">
+    <div class="header">
+      <img src="${LOGO_URL}" alt="Logo" onerror="this.style.display='none'"/>
+      <div>
+        <h1>${escapeHtml(headerTitle)}</h1>
+        <small>${escapeHtml(headerSubtitle)}</small>
+      </div>
     </div>
+
+    <div class="meta">
+      <div class="metaBox">
+        <b>Printed On</b>
+        <span>${escapeHtml(printedAt)}</span>
+      </div>
+      <div class="metaBox">
+        <b>Revenue Summary (PKR)</b>
+        <span>Today: ${escapeHtml(String(r.todaySum))}</span><br/>
+        <span>Month: ${escapeHtml(String(r.monthSum))}</span><br/>
+        <span>Overall: ${escapeHtml(String(r.allSum))}</span>
+      </div>
+      ${extraMetaHtml ? `<div class="metaBox"><b>Notes</b><span>${extraMetaHtml}</span></div>` : ""}
+    </div>
+
+    ${bodyHtml}
   </div>
-  <div class="meta">
-    Printed on: ${new Date().toLocaleString()}
-    ${extraMetaHtml ? "<br/>" + extraMetaHtml : ""}
-  </div>
-  ${bodyHtml}
   <script>window.onload = function(){ window.print(); };</script>
 </body>
 </html>
@@ -730,11 +1041,16 @@ $("btnPrintMedicine").addEventListener("click", () => {
 $("btnPrintSales").addEventListener("click", () => {
   const printArea = document.getElementById("salesPrintArea");
   const html = printArea ? printArea.innerHTML : "<p>No sales to print</p>";
+
+  const filter = el_salesFilter.value || "all";
+  const tag = filter === "today" ? "Today"
+           : filter === "month" ? "This Month"
+           : "All";
   openPrintWindow({
     title: "Sales Sheet",
     headerTitle: "SHIFA-UL-DAHAR — Sales Sheet",
     headerSubtitle: "Rohani u Jasmani Ilaj Gah",
-    extraMetaHtml: "This print includes Sales History (with Notes).",
+    extraMetaHtml: `Filter: ${escapeHtml(tag)} • Includes Charged PKR + Notes`,
     bodyHtml: html
   });
 });
@@ -768,6 +1084,8 @@ $("btnExport").addEventListener("click", () => {
           Customer: s.customer || "",
           Mobile: s.mobile || "",
           Address: s.address || "",
+          ChargedPKR: Number(s.chargedPKR || 0),
+          PayNote: s.payNote || "",
           Notes: s.note || "",
           MedicineID: it.medId || "",
           Medicine: it.medName || "",
@@ -782,7 +1100,7 @@ $("btnExport").addEventListener("click", () => {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(salesRows), "Sales");
     XLSX.writeFile(wb, "Shifa-ul-Dahar_Records.xlsx");
 
-    wowToast("Exported ✅", "Excel file downloaded.", true, 2500);
+    wowToast("Exported ✅", "Excel file downloaded.", true, 2300);
   } catch (e) {
     wowToast("Export Failed", e.message, false, 10000);
   }
@@ -797,9 +1115,10 @@ $("btnClearAll").addEventListener("click", async () => {
     await deleteCollectionAll("sales");
     await deleteCollectionAll("customers");
     await deleteCollectionAll("medicines");
-    currentSaleItems = [];
+    clearSaleForm(false);
     setMedicineFormToNextFromFirebase();
     renderAll();
+    renderRevenueKpis();
     wowToast("Cleared ✅", "All data deleted.", true, 2600);
   } catch (err) {
     console.error(err);
@@ -823,6 +1142,7 @@ $("btnDebug").addEventListener("click", () => {
   const lines = [];
   lines.push("DEBUG INFO");
   lines.push("Project: " + firebaseConfig.projectId);
+  lines.push("User: " + (currentUser?.email || "none"));
   lines.push("Medicines loaded: " + state.medicines.length);
   lines.push("Next ID: " + computeNextMedicineIdFromState());
   lines.push("Customers loaded: " + state.customers.length);
@@ -841,6 +1161,7 @@ function renderAll() {
   renderSalesMedicineDropdown();
   renderSalesHistory();
   renderCurrentSaleItems();
+  renderRevenueKpis();
 }
 
 // =========================
@@ -848,6 +1169,5 @@ function renderAll() {
 // =========================
 setMedicineFormToNextFromFirebase(); // temporary until firebase loads
 renderAll();
-startRealtime();
-
-// ok
+startLiveClock();
+// realtime starts after successful login (onAuthStateChanged)
