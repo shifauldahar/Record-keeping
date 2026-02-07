@@ -1,7 +1,10 @@
 // =========================
 // CONFIG
 // =========================
-const API_URL = "https://script.google.com/macros/s/AKfycbym-_77eC6GCdmawOiaTPjikm9gURX9KcLyFWjFLdjglPjuYSBQy8bk2M3LjGRsKfl9IQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzZ0kNIr7uVLh3u_S6JV8dgAlsd-Q04CrHunD2VMir95jUgkWqxJtlm4epP4T1iZ32B8Q/exec";
+
+// ✅ Put your PNG logo in same folder as index.html OR change this path
+const LOGO_URL = "./logo.png";
 
 // =========================
 // UI Helpers
@@ -195,44 +198,77 @@ document.getElementById("btnSaveMedicine").addEventListener("click", async () =>
   }
 });
 
-// Print Medicines
-document.getElementById("btnPrintMedicine").addEventListener("click", () => {
-  const printArea = document.getElementById("medicinePrintArea");
-  const tableHtml = printArea ? printArea.innerHTML : "<p>No data to print</p>";
-
-  const w = window.open("", "_blank", "width=900,height=650");
+// =========================
+// PRINT Helpers (shared)
+// =========================
+function openPrintWindow({ title, headerTitle, headerSubtitle, extraMetaHtml, bodyHtml }) {
+  const w = window.open("", "_blank", "width=980,height=720");
   w.document.open();
   w.document.write(`
 <!doctype html>
 <html>
 <head>
 <meta charset="utf-8" />
-<title>Print Medicines</title>
+<title>${escapeHtml(title)}</title>
 <style>
-body{ font-family: Arial, sans-serif; padding: 20px; color:#000; }
-.header{ border-bottom:2px solid #ddd; padding-bottom:12px; margin-bottom:14px; }
-.header h1{ margin:0; font-size:18px; letter-spacing:.3px; }
-.header small{ display:block; margin-top:4px; color:#444; font-weight:600; }
-.meta{ margin: 8px 0 14px 0; font-size:12px; color:#333; }
-table{ width:100%; border-collapse:collapse; font-size:13px; }
-th, td{ padding:10px; border:1px solid #ddd; text-align:left; vertical-align:top; }
-th{ background:#f5f5f5; font-weight:700; }
+  body{ font-family: Arial, sans-serif; padding: 20px; color:#000; }
+  .header{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    border-bottom:2px solid #ddd;
+    padding-bottom:12px;
+    margin-bottom:14px;
+  }
+  .header img{ height:64px; width:auto; object-fit:contain; }
+  .header h1{ margin:0; font-size:18px; letter-spacing:.3px; }
+  .header small{ display:block; margin-top:4px; color:#444; font-weight:600; }
+  .meta{ margin: 8px 0 14px 0; font-size:12px; color:#333; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th, td{ padding:10px; border:1px solid #ddd; text-align:left; vertical-align:top; }
+  th{ background:#f5f5f5; font-weight:700; }
 </style>
 </head>
 <body>
   <div class="header">
-    <h1>SHIFA-UL-DAHAR — Medicines Sheet</h1>
-    <small>Rohani u Jasmani Ilaj Gah</small>
+    <img src="${LOGO_URL}" alt="Logo" onerror="this.style.display='none'"/>
+    <div>
+      <h1>${escapeHtml(headerTitle)}</h1>
+      <small>${escapeHtml(headerSubtitle)}</small>
+    </div>
   </div>
-  <div class="meta">Printed on: ${new Date().toLocaleString()}</div>
-  ${tableHtml}
-  <script>window.onload=function(){window.print();};</script>
+
+  <div class="meta">
+    Printed on: ${new Date().toLocaleString()}
+    ${extraMetaHtml ? "<br/>" + extraMetaHtml : ""}
+  </div>
+
+  ${bodyHtml}
+
+  <script>
+    window.onload = function(){ window.print(); };
+  <\/script>
 </body>
 </html>
   `);
   w.document.close();
+}
+
+// Print Medicines
+document.getElementById("btnPrintMedicine").addEventListener("click", () => {
+  const printArea = document.getElementById("medicinePrintArea");
+  const html = printArea ? printArea.innerHTML : "<p>No data to print</p>";
+
+  openPrintWindow({
+    title: "Medicines Sheet",
+    headerTitle: "SHIFA-UL-DAHAR — Medicines Sheet",
+    headerSubtitle: "Rohani u Jasmani Ilaj Gah",
+    extraMetaHtml: "",
+    bodyHtml: html
+  });
 });
 
+// Render Medicines list
 function renderMedicines() {
   const tbody = document.querySelector("#medTable tbody");
   tbody.innerHTML = "";
@@ -241,8 +277,8 @@ function renderMedicines() {
   for (const m of meds) {
     const tr = document.createElement("tr");
     const status = Number(m.availableQty) > 0
-      ? `<span class="pill status-ok">In Stock</span>`
-      : `<span class="pill status-bad">Out</span>`;
+      ? `<span>In Stock</span>`
+      : `<span>Out</span>`;
 
     tr.innerHTML = `
       <td><b>${escapeHtml(m.id)}</b></td>
@@ -331,6 +367,7 @@ function renderCustomerDatalist() {
 const el_sCustomer = document.getElementById("sCustomer");
 const el_sMobile = document.getElementById("sMobile");
 const el_sAddress = document.getElementById("sAddress");
+const el_sNote = document.getElementById("sNote"); // ✅ NEW
 const el_sMedSelect = document.getElementById("sMedSelect");
 const el_sQty = document.getElementById("sQty");
 
@@ -396,6 +433,7 @@ document.getElementById("btnResetSale").addEventListener("click", () => {
   el_sCustomer.value = "";
   el_sMobile.value = "";
   el_sAddress.value = "";
+  el_sNote.value = "";
   el_sQty.value = "";
   renderCurrentSaleItems();
 });
@@ -405,6 +443,7 @@ document.getElementById("btnFinalizeSale").addEventListener("click", async () =>
     const customer = el_sCustomer.value.trim();
     const mobile = el_sMobile.value.trim();
     const address = el_sAddress.value.trim();
+    const note = el_sNote.value.trim(); // ✅ NEW
 
     if (!customer) return alert("Customer name required.");
     if (!mobile) return alert("Mobile required.");
@@ -415,6 +454,7 @@ document.getElementById("btnFinalizeSale").addEventListener("click", async () =>
       customer,
       mobile,
       address,
+      note, // ✅ save notes
       items: currentSaleItems.map(i => ({ medId: i.medId, medName: i.medName, qty: i.qty }))
     };
 
@@ -422,6 +462,7 @@ document.getElementById("btnFinalizeSale").addEventListener("click", async () =>
     await apiPost("addSale", { sale });
 
     currentSaleItems = [];
+    el_sNote.value = "";
     await syncFromSheet();
     renderAll();
     toast("Sale saved + stock updated ✅", true);
@@ -476,12 +517,27 @@ function renderSalesHistory() {
       <td>${escapeHtml(s.customer)}</td>
       <td>${escapeHtml(s.mobile)}</td>
       <td>${escapeHtml(itemsText)}</td>
+      <td>${escapeHtml(s.note || "")}</td>
     `;
     tbody.appendChild(tr);
   }
 
   document.getElementById("saleCountPill").textContent = state.sales.length + " sales";
 }
+
+// ✅ Print Sales (history table)
+document.getElementById("btnPrintSales").addEventListener("click", () => {
+  const printArea = document.getElementById("salesPrintArea");
+  const html = printArea ? printArea.innerHTML : "<p>No sales to print</p>";
+
+  openPrintWindow({
+    title: "Sales Sheet",
+    headerTitle: "SHIFA-UL-DAHAR — Sales Sheet",
+    headerSubtitle: "Rohani u Jasmani Ilaj Gah",
+    extraMetaHtml: "This print includes Sales History (with Notes).",
+    bodyHtml: html
+  });
+});
 
 // =========================
 // Export Excel
@@ -509,6 +565,7 @@ document.getElementById("btnExport").addEventListener("click", () => {
         Customer: s.customer,
         Mobile: s.mobile,
         Address: s.address || "",
+        Notes: s.note || "",          // ✅ NEW
         MedicineID: it.medId,
         Medicine: it.medName,
         Qty: it.qty

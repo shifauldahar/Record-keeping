@@ -367,12 +367,17 @@
     <!-- SALES -->
     <section id="tab-sale" class="tabpane" style="display:none">
       <div class="grid">
+
         <div class="card">
           <div class="hd">
             <h2>Sale Entry (Multiple Items Allowed)</h2>
-            <div class="pill" id="saleCountPill">0 sales</div>
+            <div class="split no-print">
+              <span class="pill" id="saleCountPill">0 sales</span>
+              <button class="btn mini" id="btnPrintSales">Print Sales</button>
+            </div>
           </div>
           <div class="bd">
+
             <div class="row">
               <div>
                 <label>Customer (select or type)</label>
@@ -388,6 +393,11 @@
             <div style="margin-top:12px">
               <label>Address</label>
               <input id="sAddress" placeholder="Address..." />
+            </div>
+
+            <div style="margin-top:12px">
+              <label>Notes / Disease Details (optional)</label>
+              <textarea id="sNote" placeholder="Patient disease details / diagnosis / instructions..."></textarea>
             </div>
 
             <hr style="border:0;border-top:1px solid var(--line);margin:14px 0" />
@@ -439,29 +449,30 @@
             <h3 style="margin:0 0 10px 0;font-size:13px;color:var(--accent2);letter-spacing:.3px">
               Sales History
             </h3>
-            <table id="salesTable">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Customer</th>
-                  <th>Mobile</th>
-                  <th>Items</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
+            <div id="salesPrintArea">
+              <table id="salesTable">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Mobile</th>
+                    <th>Items</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
 
           </div>
         </div>
 
       </div>
     </section>
-
   </div>
 
   <div class="toast" id="toast"></div>
 
-  <!-- ✅ IMPORTANT: app.js at end -->
   <script src="./app.js"></script>
 </body>
 </html>
