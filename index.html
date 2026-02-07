@@ -144,14 +144,6 @@
     .split{display:flex; gap:10px; align-items:center; flex-wrap:wrap;justify-content:flex-end;}
     .mini{padding:8px 10px;border-radius:12px;font-size:12px;font-weight:850;}
 
-    @media print{
-      body{background:#fff;color:#000}
-      .topbar, .tabs, .no-print{display:none !important}
-      .card{box-shadow:none;border:1px solid #ddd}
-      th{color:#000}
-      td{color:#000}
-    }
-
     .toast{
       position: fixed;
       right: 14px;
@@ -164,7 +156,7 @@
       box-shadow: var(--shadow);
       font-weight: 800;
       font-size: 12px;
-      max-width: 360px;
+      max-width: 420px;
       display:none;
       z-index: 9999;
       white-space:pre-line;
@@ -183,6 +175,10 @@
       font-weight:800;
     }
     .right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+
+    @media print{
+      .no-print{display:none !important}
+    }
   </style>
 </head>
 
@@ -198,8 +194,8 @@
         <div class="right no-print">
           <span class="badge" id="connBadge">Connecting…</span>
           <div class="btnrow">
-            <button class="btn" id="btnSync">Sync From Sheet</button>
-            <button class="btn primary" id="btnExport">Export Excel (.xlsx)</button>
+            <button class="btn" id="btnExport">Export Excel (.xlsx)</button>
+            <button class="btn" id="btnDebug">Debug</button>
             <button class="btn danger" id="btnClearAll">Clear All Data</button>
           </div>
         </div>
@@ -421,7 +417,7 @@
 
             <div class="hint">
               • Add multiple items then finalize once.<br/>
-              • Finalize will save sale + update stock in Google Sheet.
+              • Finalize saves to Firestore instantly and logs to Google Sheet in backend.
             </div>
           </div>
         </div>
@@ -449,6 +445,7 @@
             <h3 style="margin:0 0 10px 0;font-size:13px;color:var(--accent2);letter-spacing:.3px">
               Sales History
             </h3>
+
             <div id="salesPrintArea">
               <table id="salesTable">
                 <thead>
@@ -473,6 +470,6 @@
 
   <div class="toast" id="toast"></div>
 
-  <script src="./app.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
