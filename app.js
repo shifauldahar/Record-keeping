@@ -4,7 +4,7 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbzZ0kNIr7uVLh3u_S6JV8dgAlsd-Q04CrHunD2VMir95jUgkWqxJtlm4epP4T1iZ32B8Q/exec";
 
 // ✅ Put your PNG logo in same folder as index.html OR change this path
-const LOGO_URL = "./https://raw.githubusercontent.com/shifauldahar/Record-keeping/d13c6c6b14fd25fe6133f6379339751e20059d64/logo1.png
+const LOGO_URL = "https://raw.githubusercontent.com/shifauldahar/Record-keeping/d13c6c6b14fd25fe6133f6379339751e20059d64/logo1.png
 ";
 
 // =========================
@@ -652,4 +652,5 @@ function renderAll() {
     toast("Connection failed ❌\n" + err.message, false);
   }
 })();
+
 
