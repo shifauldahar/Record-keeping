@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Shifa-ul-Dahar | Record Keeping</title>
+
+  <!-- SheetJS (Excel export) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root{
+      --bg: #0b2f2c;
+      --card:#0f3a35;
+      --line: rgba(255, 210, 102, .22);
+      --text: #eaf3f1;
+      --muted: rgba(234,243,241,.7);
+      --accent:#f2c15b;
+      --accent2:#ffd88a;
+      --danger:#ff5c5c;
+      --ok:#39d98a;
+      --shadow: 0 18px 48px rgba(0,0,0,.35);
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(1200px 700px at 20% 0%, rgba(242,193,91,.12), transparent 55%),
+                  radial-gradient(900px 600px at 100% 10%, rgba(242,193,91,.08), transparent 50%),
+                  linear-gradient(180deg, var(--bg), #061f1d 70%);
+      color: var(--text);
+      min-height:100vh;
+    }
+
+    .topbar{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(10px);
+      background: linear-gradient(180deg, rgba(11,47,44,.92), rgba(11,47,44,.65));
+      border-bottom: 1px solid var(--line);
+    }
+
+    .wrap{max-width:1100px;margin:0 auto;padding:18px 16px;}
+    .brand{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+    .brand h1{margin:0;letter-spacing:.6px;font-size:18px;font-weight:800;}
+    .brand small{display:block;color:var(--muted);font-weight:600;margin-top:3px;}
+
+    .btnrow{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
+    .btn{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(242,193,91,.18), rgba(15,58,53,.0));
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:750;
+      letter-spacing:.2px;
+      transition: transform .08s ease, border-color .2s ease, box-shadow .2s ease;
+      box-shadow: 0 8px 20px rgba(0,0,0,.22);
+      user-select:none;
+    }
+    .btn:hover{transform: translateY(-1px); border-color: rgba(242,193,91,.5)}
+    .btn.primary{
+      background: linear-gradient(180deg, rgba(242,193,91,.55), rgba(242,193,91,.16));
+      border-color: rgba(242,193,91,.65);
+      color:#082421;
+    }
+    .btn.danger{
+      background: linear-gradient(180deg, rgba(255,92,92,.25), rgba(15,58,53,.0));
+      border-color: rgba(255,92,92,.35);
+    }
+
+    .tabs{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
+    .tab{
+      padding:10px 12px;border-radius:14px;cursor:pointer;
+      border:1px solid var(--line);
+      background: rgba(15,58,53,.45);
+      font-weight:800;color:var(--muted);
+    }
+    .tab.active{
+      color:#082421;
+      background: linear-gradient(180deg, rgba(242,193,91,.62), rgba(242,193,91,.20));
+      border-color: rgba(242,193,91,.7);
+      box-shadow: var(--shadow);
+    }
+
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;margin-top:16px}
+    @media (max-width: 900px){ .grid{grid-template-columns:1fr;} }
+
+    .card{
+      background: linear-gradient(180deg, rgba(15,58,53,.72), rgba(12,51,47,.55));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:14px 14px 10px 14px;
+      border-bottom:1px solid var(--line);
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+    }
+    .card .hd h2{margin:0;font-size:14px;letter-spacing:.4px;font-weight:900}
+    .card .bd{padding:14px}
+
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width: 520px){ .row{grid-template-columns:1fr;} }
+
+    label{display:block;font-size:12px;color:var(--muted);font-weight:800;margin-bottom:6px}
+    input, textarea, select{
+      width:100%;
+      padding:11px 12px;
+      border-radius:12px;
+      border:1px solid rgba(242,193,91,.22);
+      outline:none;
+      background: rgba(6,31,29,.55);
+      color: var(--text);
+      font-weight:700;
+    }
+    textarea{min-height:88px;resize:vertical}
+    input::placeholder, textarea::placeholder{color:rgba(234,243,241,.45)}
+
+    .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+    .hint{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.45;}
+
+    table{width:100%;border-collapse: collapse;font-size:13px;}
+    th, td{padding:10px 10px;border-bottom:1px solid rgba(242,193,91,.18);vertical-align:top;}
+    th{color:var(--accent2);text-align:left;font-weight:900;letter-spacing:.25px}
+    td{color:rgba(234,243,241,.9);font-weight:650}
+
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(242,193,91,.25);
+      background: rgba(242,193,91,.08);
+      color: var(--accent2);
+      font-weight:900;font-size:12px;
+      white-space:nowrap;
+    }
+    .status-ok{border-color: rgba(57,217,138,.35); background: rgba(57,217,138,.08); color: rgba(57,217,138,.95)}
+    .status-bad{border-color: rgba(255,92,92,.35); background: rgba(255,92,92,.08); color: rgba(255,92,92,.95)}
+
+    .split{display:flex; gap:10px; align-items:center; flex-wrap:wrap;justify-content:flex-end;}
+    .mini{padding:8px 10px;border-radius:12px;font-size:12px;font-weight:850;}
+
+    .badge{
+      font-size:12px;
+      color:rgba(234,243,241,.85);
+      border:1px solid rgba(242,193,91,.25);
+      background: rgba(242,193,91,.06);
+      padding:6px 10px;
+      border-radius: 999px;
+      font-weight:800;
+    }
+    .right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+
+    /* WOW TOAST */
+    .toast{
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      width: min(440px, calc(100vw - 32px));
+      display:none;
+      z-index: 9999;
+    }
+    .toast.show{display:block}
+    .toastCard{
+      border-radius: 18px;
+      border: 1px solid rgba(242,193,91,.25);
+      background: radial-gradient(800px 220px at 20% 0%, rgba(242,193,91,.22), transparent 65%),
+                  linear-gradient(180deg, rgba(15,58,53,.95), rgba(6,31,29,.88));
+      box-shadow: 0 22px 70px rgba(0,0,0,.45);
+      overflow:hidden;
+      transform: translateY(6px);
+      animation: pop .18s ease-out forwards;
+    }
+    @keyframes pop{ to{ transform: translateY(0);} }
+    .toastTop{
+      display:flex; gap:10px; align-items:flex-start;
+      padding: 12px 12px 10px 12px;
+    }
+    .toastIcon{
+      height: 36px; width:36px; border-radius: 12px;
+      display:flex; align-items:center; justify-content:center;
+      font-weight: 1000;
+      border:1px solid rgba(242,193,91,.22);
+      background: rgba(242,193,91,.10);
+      flex: 0 0 auto;
+    }
+    .toastMain{flex:1; min-width: 0;}
+    .toastTitle{
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: .2px;
+      margin: 0 0 4px 0;
+      color: var(--accent2);
+    }
+    .toastMsg{
+      font-size: 12px;
+      font-weight: 780;
+      color: rgba(234,243,241,.92);
+      white-space: pre-line;
+      line-height: 1.35;
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+    .toastBar{
+      height: 3px;
+      background: rgba(242,193,91,.22);
+      position: relative;
+      overflow:hidden;
+    }
+    .toastBar > i{
+      display:block; height:100%;
+      width: 100%;
+      transform: translateX(-100%);
+      background: linear-gradient(90deg, rgba(242,193,91,.0), rgba(242,193,91,.9), rgba(57,217,138,.9));
+      animation: bar 3.5s linear forwards;
+    }
+    @keyframes bar{ to{ transform: translateX(0%);} }
+
+    .toast.ok .toastIcon{
+      border-color: rgba(57,217,138,.35);
+      background: rgba(57,217,138,.12);
+      color: rgba(57,217,138,.95);
+    }
+    .toast.bad .toastIcon{
+      border-color: rgba(255,92,92,.35);
+      background: rgba(255,92,92,.12);
+      color: rgba(255,92,92,.95);
+    }
+    .toast.ok .toastTitle{ color: rgba(57,217,138,.95); }
+    .toast.bad .toastTitle{ color: rgba(255,92,92,.95); }
+
+    @media print{
+      .no-print{display:none !important}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="wrap">
+      <div class="brand">
+        <div>
+          <h1>SHIFA-UL-DAHAR — Record Keeping</h1>
+          <small>Rohani u Jasmani Ilaj Gah</small>
+        </div>
+
+        <div class="right no-print">
+          <span class="badge" id="connBadge">Connecting…</span>
+          <div class="btnrow">
+            <button class="btn" id="btnExport">Export Excel (.xlsx)</button>
+            <button class="btn" id="btnDebug">Debug</button>
+            <button class="btn danger" id="btnClearAll">Clear All Data</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs no-print">
+        <div class="tab active" data-tab="med">Balance Sheet</div>
+        <div class="tab" data-tab="cust">Customers Sheet</div>
+        <div class="tab" data-tab="sale">Sales Sheet</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <!-- MEDICINES -->
+    <section id="tab-med" class="tabpane">
+      <div class="grid">
+
+        <div class="card">
+          <div class="hd">
+            <h2>Medicine Form (Add / Search / Update Stock)</h2>
+            <div class="split no-print">
+              <span class="pill" id="nextIdPill">Next ID: 001</span>
+              <button class="btn mini" id="btnPrintMedicine">Print Medicines</button>
+            </div>
+          </div>
+
+          <div class="bd">
+            <div class="row">
+              <div>
+                <label>Record ID (Search)</label>
+                <input id="mSearchId" placeholder="e.g. 001" />
+              </div>
+              <div class="no-print" style="display:flex;gap:10px;align-items:flex-end;">
+                <button class="btn" id="btnSearchMedicine" style="width:100%">Search ID</button>
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:12px">
+              <div>
+                <label>Record ID (Auto)</label>
+                <input id="mId" disabled />
+              </div>
+              <div>
+                <label>Medicine Name</label>
+                <input id="mName" placeholder="e.g. Majoon Shifaa" />
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:12px">
+              <div>
+                <label>New Quantity Added</label>
+                <input id="mAddQty" type="number" min="0" placeholder="e.g. 50" />
+              </div>
+              <div>
+                <label>Available Quantity (auto)</label>
+                <input id="mAvail" disabled />
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:12px">
+              <div>
+                <label>Total Quantity Added (auto)</label>
+                <input id="mTotal" disabled />
+              </div>
+              <div>
+                <label>Notes (optional)</label>
+                <input id="mNote" placeholder="batch / expiry / supplier..." />
+              </div>
+            </div>
+
+            <div class="actions no-print">
+              <button class="btn primary" id="btnSaveMedicine">Save / Add Stock</button>
+              <button class="btn" id="btnNewMedicine">New Medicine (Next ID)</button>
+            </div>
+
+            <div class="hint">
+              • Search by ID fills fields.<br/>
+              • “Save / Add Stock” adds the new quantity into <b>Total</b> and <b>Available</b>.<br/>
+              • Sales will automatically minus from Available.
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="hd">
+            <h2>Medicines List</h2>
+            <div class="pill" id="medCountPill">0 items</div>
+          </div>
+          <div class="bd" id="medicinePrintArea">
+            <table id="medTable">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Medicine</th>
+                  <th>Total Added</th>
+                  <th>Available</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- CUSTOMERS -->
+    <section id="tab-cust" class="tabpane" style="display:none">
+      <div class="grid">
+        <div class="card">
+          <div class="hd">
+            <h2>Customer Form</h2>
+            <div class="pill" id="custCountPill">0 customers</div>
+          </div>
+          <div class="bd">
+            <div class="row">
+              <div>
+                <label>Customer Name</label>
+                <input id="cName" placeholder="e.g. Ahmed Ali" />
+              </div>
+              <div>
+                <label>Mobile Number</label>
+                <input id="cMobile" placeholder="e.g. 03xx-xxxxxxx" />
+              </div>
+            </div>
+            <div style="margin-top:12px">
+              <label>Address</label>
+              <textarea id="cAddress" placeholder="Full address..."></textarea>
+            </div>
+
+            <div class="actions no-print">
+              <button class="btn primary" id="btnSaveCustomer">Save Customer</button>
+              <button class="btn" id="btnResetCustomer">Clear</button>
+            </div>
+
+            <div class="hint">
+              Customers are used in Sales. Mobile helps to avoid duplicates (unique).
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="hd">
+            <h2>Customers List</h2>
+          </div>
+          <div class="bd">
+            <table id="custTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Mobile</th>
+                  <th>Address</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SALES -->
+    <section id="tab-sale" class="tabpane" style="display:none">
+      <div class="grid">
+
+        <div class="card">
+          <div class="hd">
+            <h2>Sale Entry (Multiple Items Allowed)</h2>
+            <div class="split no-print">
+              <span class="pill" id="saleCountPill">0 sales</span>
+              <button class="btn mini" id="btnPrintSales">Print Sales</button>
+            </div>
+          </div>
+          <div class="bd">
+
+            <div class="row">
+              <div>
+                <label>Customer (select or type)</label>
+                <input id="sCustomer" list="customerList" placeholder="e.g. Ahmed Ali" />
+                <datalist id="customerList"></datalist>
+              </div>
+              <div>
+                <label>Mobile</label>
+                <input id="sMobile" placeholder="03xx..." />
+              </div>
+            </div>
+
+            <div style="margin-top:12px">
+              <label>Address</label>
+              <input id="sAddress" placeholder="Address..." />
+            </div>
+
+            <div style="margin-top:12px">
+              <label>Notes / Disease Details (optional)</label>
+              <textarea id="sNote" placeholder="Patient disease details / diagnosis / instructions..."></textarea>
+            </div>
+
+            <hr style="border:0;border-top:1px solid var(--line);margin:14px 0" />
+
+            <div class="row">
+              <div>
+                <label>Medicine (choose)</label>
+                <select id="sMedSelect"></select>
+              </div>
+              <div>
+                <label>Quantity</label>
+                <input id="sQty" type="number" min="1" placeholder="e.g. 2" />
+              </div>
+            </div>
+
+            <div class="actions no-print">
+              <button class="btn" id="btnAddSaleItem">Add Item</button>
+              <button class="btn primary" id="btnFinalizeSale">Finalize Sale</button>
+              <button class="btn" id="btnResetSale">Clear Sale</button>
+            </div>
+
+            <div class="hint">
+              • Add multiple items then finalize once.<br/>
+              • Finalize saves to Firestore instantly.
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="hd">
+            <h2>Current Sale Items</h2>
+            <div class="pill" id="saleItemsPill">0 items</div>
+          </div>
+          <div class="bd">
+            <table id="saleItemsTable">
+              <thead>
+                <tr>
+                  <th>Medicine</th>
+                  <th>Qty</th>
+                  <th>Available After</th>
+                  <th class="no-print">Remove</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+
+            <hr style="border:0;border-top:1px solid var(--line);margin:14px 0" />
+
+            <h3 style="margin:0 0 10px 0;font-size:13px;color:var(--accent2);letter-spacing:.3px">
+              Sales History
+            </h3>
+
+            <div id="salesPrintArea">
+              <table id="salesTable">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Mobile</th>
+                    <th>Items</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+
+  <!-- WOW Toast -->
+  <div class="toast" id="toast">
+    <div class="toastCard">
+      <div class="toastTop">
+        <div class="toastIcon" id="toastIcon">✓</div>
+        <div class="toastMain">
+          <div class="toastTitle" id="toastTitle">Done</div>
+          <p class="toastMsg" id="toastMsg"></p>
+        </div>
+      </div>
+      <div class="toastBar"><i id="toastBar"></i></div>
+    </div>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
