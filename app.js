@@ -29,18 +29,18 @@ const LOGO_URL = "https://raw.githubusercontent.com/shifauldahar/Record-keeping/
 window.addEventListener("error", (e) => {
   const msg = `JS Error:\n${e.message}\n${e.filename || "?"}:${e.lineno || "?"}:${e.colno || "?"}`;
   console.error(e.error || e);
-  wowToast("Error", msg, false, 9000);
+  wowToast("Error", msg, false, 10000);
 });
 window.addEventListener("unhandledrejection", (e) => {
   const reason = e.reason?.message || String(e.reason || "Unknown rejection");
   console.error(e.reason || e);
-  wowToast("Promise Error", reason, false, 9000);
+  wowToast("Promise Error", reason, false, 10000);
 });
 
 // =========================
 // WOW TOAST
 // =========================
-function wowToast(title, msg, ok = true, ms = 3500) {
+function wowToast(title, msg, ok = true, ms = 10000) {
   const wrap = document.getElementById("toast");
   if (!wrap) { alert(title + "\n" + msg); return; }
 
@@ -849,4 +849,5 @@ function renderAll() {
 setMedicineFormToNextFromFirebase(); // temporary until firebase loads
 renderAll();
 startRealtime();
+
 // ok
