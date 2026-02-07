@@ -849,3 +849,4 @@ function renderAll() {
 setMedicineFormToNextFromFirebase(); // temporary until firebase loads
 renderAll();
 startRealtime();
+// ok
