@@ -1,5 +1,5 @@
 // =========================
-// FIREBASE (Firestore realtime) - Debug Build
+// FIREBASE (Firestore realtime) - WOW + Auto Next ID from Firebase
 // =========================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import {
@@ -10,7 +10,7 @@ import {
   serverTimestamp, increment
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-// ✅ Your Firebase config (ok)
+// ✅ Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyBlwnPL3ssSVaY8firV9R-moXoJMT4UhVk",
   authDomain: "recordkeeping-35260.firebaseapp.com",
@@ -24,37 +24,43 @@ const firebaseConfig = {
 const LOGO_URL = "https://raw.githubusercontent.com/shifauldahar/Record-keeping/b3a3663fe8ce92d63a3275c7395433a387d9230e/logo1.png";
 
 // =========================
-// Global Crash Catchers (VERY IMPORTANT)
+// GLOBAL ERROR CATCHERS
 // =========================
 window.addEventListener("error", (e) => {
-  const msg = `JS Error:
-${e.message}
-File: ${e.filename || "?"}:${e.lineno || "?"}:${e.colno || "?"}`;
+  const msg = `JS Error:\n${e.message}\n${e.filename || "?"}:${e.lineno || "?"}:${e.colno || "?"}`;
   console.error(e.error || e);
-  safeToast(msg, false, 9000);
+  wowToast("Error", msg, false, 9000);
 });
-
 window.addEventListener("unhandledrejection", (e) => {
   const reason = e.reason?.message || String(e.reason || "Unknown rejection");
-  const msg = `Promise Error:
-${reason}`;
   console.error(e.reason || e);
-  safeToast(msg, false, 9000);
+  wowToast("Promise Error", reason, false, 9000);
 });
 
 // =========================
-// UI Helpers
+// WOW TOAST
 // =========================
-function safeToast(msg, ok = true, ms = 3500) {
-  const t = document.getElementById("toast");
-  if (!t) { alert(msg); return; }
-  t.className = "toast show " + (ok ? "ok" : "bad");
-  t.textContent = msg;
-  setTimeout(() => { t.className = "toast"; }, ms);
-}
+function wowToast(title, msg, ok = true, ms = 3500) {
+  const wrap = document.getElementById("toast");
+  if (!wrap) { alert(title + "\n" + msg); return; }
 
-function toast(msg, ok = true) {
-  safeToast(msg, ok, 3500);
+  const tTitle = document.getElementById("toastTitle");
+  const tMsg = document.getElementById("toastMsg");
+  const tIcon = document.getElementById("toastIcon");
+  const tBar = document.getElementById("toastBar");
+
+  wrap.classList.remove("ok", "bad");
+  wrap.classList.add(ok ? "ok" : "bad");
+
+  tTitle.textContent = title || (ok ? "Done" : "Error");
+  tMsg.textContent = msg || "";
+  tIcon.textContent = ok ? "✓" : "!";
+  tBar.style.animation = "none";
+  void tBar.offsetWidth; // restart animation
+  tBar.style.animation = "";
+
+  wrap.classList.add("show");
+  setTimeout(() => wrap.classList.remove("show"), ms);
 }
 
 function setConn(status, ok) {
@@ -69,12 +75,6 @@ function pad3(n) {
   if (!s) return "";
   return s.length >= 3 ? s : ("000" + s).slice(-3);
 }
-
-function nowStr() {
-  const d = new Date();
-  return d.toISOString().slice(0, 19).replace("T", " ");
-}
-
 function escapeHtml(str) {
   return String(str ?? "")
     .replaceAll("&", "&amp;")
@@ -83,48 +83,25 @@ function escapeHtml(str) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+function nowStr() {
+  const d = new Date();
+  return d.toISOString().slice(0, 19).replace("T", " ");
+}
 
 function explainFirestoreError(err) {
   const code = err?.code || "";
   const msg = err?.message || String(err || "Unknown error");
 
-  // Most common problems
   if (code === "permission-denied") {
-    return `PERMISSION DENIED (Firestore Rules)
-Fix:
-1) Firebase Console → Firestore Database → Rules
-2) For testing, allow read/write temporarily:
-
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
-    }
+    return `PERMISSION DENIED (Firestore Rules)\nFix:\nFirestore Console → Rules → allow read/write (testing).`;
   }
-}
-
-Then publish rules.`;
-  }
-
   if (code === "failed-precondition" && msg.toLowerCase().includes("index")) {
-    return `MISSING INDEX (Firestore)
-Fix:
-Open the error details in Console (F12) → it contains a link "create index".
-Click it → Create index → wait → refresh site.`;
+    return `MISSING INDEX (Firestore)\nFix:\nOpen Console(F12) error → click "create index" link.`;
   }
-
   if (code === "unavailable") {
-    return `Firestore UNAVAILABLE (network / blocked)
-Fix:
-1) Check internet
-2) Try another browser
-3) Disable adblock/VPN
-4) Ensure site is HTTPS (GitHub pages is ok).`;
+    return `Firestore UNAVAILABLE\nFix:\nCheck internet / adblock / VPN / https.`;
   }
-
-  return `Firestore Error:
-${code ? `Code: ${code}\n` : ""}${msg}`;
+  return `Firestore Error:\n${code ? `Code: ${code}\n` : ""}${msg}`;
 }
 
 // =========================
@@ -136,7 +113,7 @@ try {
   db = getFirestore(app);
 } catch (err) {
   setConn("Firebase init failed ❌", false);
-  safeToast("Firebase init failed:\n" + (err?.message || err), false, 12000);
+  wowToast("Firebase Init Failed", err?.message || String(err), false, 12000);
   throw err;
 }
 
@@ -146,9 +123,10 @@ try {
 let state = { medicines: [], customers: [], sales: [] };
 let currentSaleItems = [];
 let connectedOnce = false;
+let medicinesLoadedOnce = false; // IMPORTANT for first-load next ID
 
 // =========================
-// DOM refs (ensure exist)
+// DOM helper
 // =========================
 function $(id) {
   const el = document.getElementById(id);
@@ -186,24 +164,26 @@ function findMedicineById(id) {
   return state.medicines.find(m => m.id === id);
 }
 
-function nextMedicineId() {
+function computeNextMedicineIdFromState() {
   let max = 0;
   for (const m of state.medicines) {
-    const n = parseInt(m.id, 10);
+    const n = parseInt(m.id || m?.docId || "", 10);
     if (!Number.isNaN(n)) max = Math.max(max, n);
   }
-  return pad3(max + 1);
+  return pad3(max + 1) || "001";
 }
 
-function resetMedicineFormToNew() {
-  el_mId.value = nextMedicineId() || "001";
+// ✅ This one sets the form to (max+1) from Firestore data
+function setMedicineFormToNextFromFirebase() {
+  const nextId = computeNextMedicineIdFromState();
+  el_mId.value = nextId;
   el_mName.value = "";
   el_mAddQty.value = "";
   el_mAvail.value = "0";
   el_mTotal.value = "0";
   el_mNote.value = "";
   el_mSearchId.value = "";
-  $("nextIdPill").textContent = "Next ID: " + el_mId.value;
+  $("nextIdPill").textContent = "Next ID: " + nextId;
 }
 
 function fillMedicineForm(m) {
@@ -230,28 +210,37 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
 }));
 
 // =========================
-// Realtime listeners (with detailed errors)
+// Realtime listeners
 // =========================
 function startRealtime() {
   setConn("Connecting…", true);
 
-  // ✅ medicines: orderBy("id") requires each doc has field "id" (we set it in save)
   onSnapshot(
     query(collection(db, "medicines"), orderBy("id", "asc")),
     (snap) => {
       state.medicines = snap.docs.map(d => {
         const data = d.data();
-        // ensure id field exists for sorting
-        return { ...data, id: data.id || d.id };
+        return { ...data, id: data.id || d.id, docId: d.id };
       });
+
       renderMedicines();
       renderSalesMedicineDropdown();
+
+      // ✅ FIRST OPEN: After medicines loaded from Firebase, auto set next ID
+      if (!medicinesLoadedOnce) {
+        medicinesLoadedOnce = true;
+        setMedicineFormToNextFromFirebase();
+      } else {
+        // Keep pills updated if not searching an older ID
+        const loaded = findMedicineById(el_mId.value);
+        if (!loaded) $("nextIdPill").textContent = "Next ID: " + computeNextMedicineIdFromState();
+      }
+
       if (!connectedOnce) finishConnected("medicines");
     },
     (err) => realtimeFail("medicines", err)
   );
 
-  // ✅ customers: orderBy("mobile") requires field "mobile" too
   onSnapshot(
     query(collection(db, "customers"), orderBy("mobile", "asc")),
     (snap) => {
@@ -266,9 +255,6 @@ function startRealtime() {
     (err) => realtimeFail("customers", err)
   );
 
-  // ✅ sales: orderBy("createdAt") - if old docs missing createdAt -> query fails
-  // FIX: we keep createdAt always when adding, but if you already have old docs, it can fail.
-  // Solution: fallback query orderBy("date") if createdAt fails.
   trySalesListenerPrimary();
 }
 
@@ -281,14 +267,12 @@ function trySalesListenerPrimary() {
       if (!connectedOnce) finishConnected("sales");
     },
     (err) => {
-      // If index/createdAt missing => fallback
-      console.warn("Sales primary listener failed, trying fallback:", err);
-      safeToast("Sales listener issue. Trying fallback...\n" + explainFirestoreError(err), false, 7000);
+      console.warn("Sales primary listener failed, fallback:", err);
+      wowToast("Sales Listener", "Fallback enabled.\n" + explainFirestoreError(err), false, 7000);
       trySalesListenerFallback();
     }
   );
 }
-
 function trySalesListenerFallback() {
   onSnapshot(
     query(collection(db, "sales"), orderBy("date", "desc")),
@@ -296,7 +280,7 @@ function trySalesListenerFallback() {
       state.sales = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderSalesHistory();
       if (!connectedOnce) finishConnected("sales");
-      safeToast("Sales fallback active (ordered by date). If you want createdAt, create index / ensure field exists.", true, 6000);
+      wowToast("Sales Fallback", "Using date order. CreatedAt index optional.", true, 5500);
     },
     (err) => realtimeFail("sales(fallback)", err)
   );
@@ -305,23 +289,26 @@ function trySalesListenerFallback() {
 function realtimeFail(name, err) {
   console.error(`Realtime error [${name}]`, err);
   setConn("Disconnected ❌", false);
-  safeToast(`Realtime failed: ${name}\n\n${explainFirestoreError(err)}`, false, 12000);
+  wowToast("Realtime Failed", `${name}\n\n${explainFirestoreError(err)}`, false, 12000);
 }
 
 function finishConnected(sourceName) {
   connectedOnce = true;
   setConn("Connected ✅", true);
-  toast(`Connected ✅ (listener: ${sourceName})`, true);
-  if (!el_mId.value) resetMedicineFormToNew();
+  wowToast("Connected ✅", `Listener: ${sourceName}`, true, 2500);
   renderAll();
 }
 
 // =========================
-// Button actions - Medicines
+// Medicine Buttons
 // =========================
 $("btnNewMedicine").addEventListener("click", () => {
-  try { resetMedicineFormToNew(); }
-  catch (e) { safeToast("btnNewMedicine error:\n" + e.message, false, 9000); }
+  try {
+    setMedicineFormToNextFromFirebase();
+    el_mName.focus();
+  } catch (e) {
+    wowToast("New Medicine Error", e.message, false, 9000);
+  }
 });
 
 $("btnSearchMedicine").addEventListener("click", () => {
@@ -332,15 +319,13 @@ $("btnSearchMedicine").addEventListener("click", () => {
     if (!m) throw new Error("No medicine found for ID " + id);
     fillMedicineForm(m);
   } catch (e) {
-    safeToast("Search failed:\n" + e.message, false, 8000);
+    wowToast("Search Failed", e.message, false, 8000);
   }
 });
 
 $("btnSaveMedicine").addEventListener("click", async () => {
   try {
-    // 1) Read + validate inputs
-    const currentIdRaw = (el_mId.value || "").trim();
-    const id = pad3(currentIdRaw);
+    const id = pad3((el_mId.value || "").trim());
     const name = (el_mName.value || "").trim();
     const addQty = parseInt(el_mAddQty.value, 10) || 0;
     const note = (el_mNote.value || "").trim();
@@ -351,15 +336,13 @@ $("btnSaveMedicine").addEventListener("click", async () => {
 
     const ref = doc(db, "medicines", id);
 
-    // 2) Save in transaction (create or update)
     await runTransaction(db, async (tx) => {
       const snap = await tx.get(ref);
 
       if (!snap.exists()) {
         if (addQty <= 0) throw new Error("For new medicine, add some qty (>0).");
-
         tx.set(ref, {
-          id,                 // keep for orderBy("id")
+          id,
           name,
           note,
           totalQty: addQty,
@@ -373,37 +356,32 @@ $("btnSaveMedicine").addEventListener("click", async () => {
           note,
           updatedAt: serverTimestamp(),
         };
-
         if (addQty > 0) {
           updates.totalQty = increment(addQty);
           updates.availableQty = increment(addQty);
         }
-
         tx.update(ref, updates);
       }
     });
 
-    toast("Medicine saved ✅", true);
+    wowToast("Saved ✅", `Medicine "${name}" saved.\nNext ID ready.`, true, 3200);
 
-    // 3) Auto-increment ID to next (same function, no extra helper)
+    // ✅ After save, jump to next id based on Firebase state max+1
+    // (snapshot will update quickly, but we set immediately for best UX)
     const nextNum = (parseInt(id, 10) || 0) + 1;
-    const nextId = String(nextNum).padStart(3, "0");
-
-    // 4) Reset UI for next entry
-    el_mId.value = nextId;
+    el_mId.value = pad3(nextNum);
     el_mName.value = "";
     el_mAddQty.value = "";
     el_mNote.value = "";
-
-    // (Optional) focus cursor to medicine name for faster entry
+    el_mSearchId.value = "";
+    $("nextIdPill").textContent = "Next ID: " + el_mId.value;
     el_mName.focus();
 
   } catch (err) {
     console.error(err);
-    safeToast("Save Medicine failed:\n" + explainFirestoreError(err), false, 12000);
+    wowToast("Save Failed", explainFirestoreError(err), false, 12000);
   }
 });
-
 
 // =========================
 // Customers
@@ -417,27 +395,23 @@ $("btnSaveCustomer").addEventListener("click", async () => {
     if (!name) throw new Error("Customer name required.");
     if (!mobile) throw new Error("Mobile number required.");
 
-    // IMPORTANT: include mobile field for orderBy("mobile")
     await setDoc(doc(db, "customers", mobile), {
       name, mobile, address,
       updatedAt: serverTimestamp()
     }, { merge: true });
 
     el_cName.value = ""; el_cMobile.value = ""; el_cAddress.value = "";
-    toast("Customer saved ✅", true);
+    wowToast("Saved ✅", "Customer saved successfully.", true, 2500);
 
   } catch (err) {
     console.error(err);
-    safeToast("Save Customer failed:\n" + explainFirestoreError(err), false, 12000);
+    wowToast("Customer Save Failed", explainFirestoreError(err), false, 12000);
   }
 });
 
 $("btnResetCustomer").addEventListener("click", () => {
-  try {
-    el_cName.value = ""; el_cMobile.value = ""; el_cAddress.value = "";
-  } catch (e) {
-    safeToast("Reset customer error:\n" + e.message, false, 8000);
-  }
+  el_cName.value = ""; el_cMobile.value = ""; el_cAddress.value = "";
+  wowToast("Cleared", "Customer form cleared.", true, 1800);
 });
 
 // =========================
@@ -453,7 +427,7 @@ function syncCustomerByName() {
       el_sAddress.value = c.address || "";
     }
   } catch (e) {
-    safeToast("syncCustomerByName error:\n" + e.message, false, 8000);
+    wowToast("Customer Sync Error", e.message, false, 8000);
   }
 }
 el_sCustomer.addEventListener("change", syncCustomerByName);
@@ -482,24 +456,22 @@ $("btnAddSaleItem").addEventListener("click", () => {
 
     el_sQty.value = "";
     renderCurrentSaleItems();
+    wowToast("Added ✅", `${m.name} × ${qty}`, true, 1800);
 
   } catch (e) {
-    safeToast("Add item failed:\n" + e.message, false, 9000);
+    wowToast("Add Item Failed", e.message, false, 9000);
   }
 });
 
 $("btnResetSale").addEventListener("click", () => {
-  try {
-    currentSaleItems = [];
-    el_sCustomer.value = "";
-    el_sMobile.value = "";
-    el_sAddress.value = "";
-    el_sNote.value = "";
-    el_sQty.value = "";
-    renderCurrentSaleItems();
-  } catch (e) {
-    safeToast("Reset sale error:\n" + e.message, false, 9000);
-  }
+  currentSaleItems = [];
+  el_sCustomer.value = "";
+  el_sMobile.value = "";
+  el_sAddress.value = "";
+  el_sNote.value = "";
+  el_sQty.value = "";
+  renderCurrentSaleItems();
+  wowToast("Cleared", "Sale form cleared.", true, 1800);
 });
 
 $("btnFinalizeSale").addEventListener("click", async () => {
@@ -523,7 +495,6 @@ $("btnFinalizeSale").addEventListener("click", async () => {
     };
 
     await runTransaction(db, async (tx) => {
-      // validate
       for (const it of salePayload.items) {
         const mref = doc(db, "medicines", pad3(it.medId));
         const msnap = await tx.get(mref);
@@ -535,17 +506,14 @@ $("btnFinalizeSale").addEventListener("click", async () => {
         if (qty > avail) throw new Error(`Not enough stock for ${m.name} (ID ${it.medId}). Available: ${avail}`);
       }
 
-      // deduct
       for (const it of salePayload.items) {
         const mref = doc(db, "medicines", pad3(it.medId));
         tx.update(mref, { availableQty: increment(-Number(it.qty || 0)), updatedAt: serverTimestamp() });
       }
 
-      // upsert customer
       const cref = doc(db, "customers", mobile);
       tx.set(cref, { name: customer, mobile, address, updatedAt: serverTimestamp() }, { merge: true });
 
-      // add sale
       const sref = doc(collection(db, "sales"));
       tx.set(sref, { ...salePayload, createdAt: serverTimestamp() });
     });
@@ -554,13 +522,11 @@ $("btnFinalizeSale").addEventListener("click", async () => {
     el_sNote.value = "";
     el_sQty.value = "";
     renderCurrentSaleItems();
-    toast("Sale saved + stock updated ✅", true);
-
-    logToSheetInBackground(salePayload);
+    wowToast("Sale Saved ✅", "Stock updated successfully.", true, 3000);
 
   } catch (err) {
     console.error(err);
-    safeToast("Finalize sale failed:\n" + explainFirestoreError(err), false, 12000);
+    wowToast("Sale Failed", explainFirestoreError(err), false, 12000);
   }
 });
 
@@ -591,13 +557,14 @@ function renderMedicines() {
   }
 
   $("medCountPill").textContent = meds.length + " items";
-  $("nextIdPill").textContent =
-    (findMedicineById(el_mId.value) ? "Loaded ID: " : "Next ID: ") + el_mId.value;
 
   const loaded = findMedicineById(el_mId.value);
   if (loaded) {
+    $("nextIdPill").textContent = "Loaded ID: " + loaded.id;
     el_mAvail.value = String(Number(loaded.availableQty || 0));
     el_mTotal.value = String(Number(loaded.totalQty || 0));
+  } else {
+    $("nextIdPill").textContent = "Next ID: " + computeNextMedicineIdFromState();
   }
 }
 
@@ -679,6 +646,7 @@ function renderCurrentSaleItems() {
       const i = parseInt(btn.dataset.rm, 10);
       currentSaleItems.splice(i, 1);
       renderCurrentSaleItems();
+      wowToast("Removed", "Item removed from sale.", true, 1800);
     });
   });
 }
@@ -717,14 +685,9 @@ function openPrintWindow({ title, headerTitle, headerSubtitle, extraMetaHtml, bo
 <title>${escapeHtml(title)}</title>
 <style>
   body{ font-family: Arial, sans-serif; padding: 20px; color:#000; }
-  .header{
-    display:flex; gap:12px; align-items:center;
-    border-bottom:2px solid #ddd;
-    padding-bottom:12px;
-    margin-bottom:14px;
-  }
+  .header{ display:flex; gap:12px; align-items:center; border-bottom:2px solid #ddd; padding-bottom:12px; margin-bottom:14px; }
   .header img{ height:64px; width:auto; object-fit:contain; }
-  .header h1{ margin:0; font-size:18px; letter-spacing:.3px; }
+  .header h1{ margin:0; font-size:18px; }
   .header small{ display:block; margin-top:4px; color:#444; font-weight:600; }
   .meta{ margin: 8px 0 14px 0; font-size:12px; color:#333; }
   table{ width:100%; border-collapse:collapse; font-size:13px; }
@@ -734,23 +697,18 @@ function openPrintWindow({ title, headerTitle, headerSubtitle, extraMetaHtml, bo
 </head>
 <body>
   <div class="header">
-    <img src="https://raw.githubusercontent.com/shifauldahar/Record-keeping/b3a3663fe8ce92d63a3275c7395433a387d9230e/logo1.png" alt="Logo" onerror="this.style.display='none'"/>
+    <img src="${LOGO_URL}" alt="Logo" onerror="this.style.display='none'"/>
     <div>
       <h1>${escapeHtml(headerTitle)}</h1>
       <small>${escapeHtml(headerSubtitle)}</small>
     </div>
   </div>
-
   <div class="meta">
     Printed on: ${new Date().toLocaleString()}
     ${extraMetaHtml ? "<br/>" + extraMetaHtml : ""}
   </div>
-
   ${bodyHtml}
-
-  <script>
-    window.onload = function(){ window.print(); };
-  <\/script>
+  <script>window.onload = function(){ window.print(); };</script>
 </body>
 </html>
   `);
@@ -758,35 +716,27 @@ function openPrintWindow({ title, headerTitle, headerSubtitle, extraMetaHtml, bo
 }
 
 $("btnPrintMedicine").addEventListener("click", () => {
-  try {
-    const printArea = document.getElementById("medicinePrintArea");
-    const html = printArea ? printArea.innerHTML : "<p>No data to print</p>";
-    openPrintWindow({
-      title: "Medicines Sheet",
-      headerTitle: "SHIFA-UL-DAHAR — Medicines Sheet",
-      headerSubtitle: "Rohani u Jasmani Ilaj Gah",
-      extraMetaHtml: "",
-      bodyHtml: html
-    });
-  } catch (e) {
-    safeToast("Print medicine error:\n" + e.message, false, 9000);
-  }
+  const printArea = document.getElementById("medicinePrintArea");
+  const html = printArea ? printArea.innerHTML : "<p>No data to print</p>";
+  openPrintWindow({
+    title: "Medicines Sheet",
+    headerTitle: "SHIFA-UL-DAHAR — Medicines Sheet",
+    headerSubtitle: "Rohani u Jasmani Ilaj Gah",
+    extraMetaHtml: "",
+    bodyHtml: html
+  });
 });
 
 $("btnPrintSales").addEventListener("click", () => {
-  try {
-    const printArea = document.getElementById("salesPrintArea");
-    const html = printArea ? printArea.innerHTML : "<p>No sales to print</p>";
-    openPrintWindow({
-      title: "Sales Sheet",
-      headerTitle: "SHIFA-UL-DAHAR — Sales Sheet",
-      headerSubtitle: "Rohani u Jasmani Ilaj Gah",
-      extraMetaHtml: "This print includes Sales History (with Notes).",
-      bodyHtml: html
-    });
-  } catch (e) {
-    safeToast("Print sales error:\n" + e.message, false, 9000);
-  }
+  const printArea = document.getElementById("salesPrintArea");
+  const html = printArea ? printArea.innerHTML : "<p>No sales to print</p>";
+  openPrintWindow({
+    title: "Sales Sheet",
+    headerTitle: "SHIFA-UL-DAHAR — Sales Sheet",
+    headerSubtitle: "Rohani u Jasmani Ilaj Gah",
+    extraMetaHtml: "This print includes Sales History (with Notes).",
+    bodyHtml: html
+  });
 });
 
 // =========================
@@ -832,14 +782,14 @@ $("btnExport").addEventListener("click", () => {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(salesRows), "Sales");
     XLSX.writeFile(wb, "Shifa-ul-Dahar_Records.xlsx");
 
-    toast("Excel exported ✅", true);
+    wowToast("Exported ✅", "Excel file downloaded.", true, 2500);
   } catch (e) {
-    safeToast("Export failed:\n" + e.message, false, 10000);
+    wowToast("Export Failed", e.message, false, 10000);
   }
 });
 
 // =========================
-// Clear All (batch delete)
+// Clear All
 // =========================
 $("btnClearAll").addEventListener("click", async () => {
   if (!confirm("This will delete ALL medicines, customers and sales. Continue?")) return;
@@ -848,12 +798,12 @@ $("btnClearAll").addEventListener("click", async () => {
     await deleteCollectionAll("customers");
     await deleteCollectionAll("medicines");
     currentSaleItems = [];
-    resetMedicineFormToNew();
+    setMedicineFormToNextFromFirebase();
     renderAll();
-    toast("All data cleared ✅", true);
+    wowToast("Cleared ✅", "All data deleted.", true, 2600);
   } catch (err) {
     console.error(err);
-    safeToast("Clear failed:\n" + explainFirestoreError(err), false, 12000);
+    wowToast("Clear Failed", explainFirestoreError(err), false, 12000);
   }
 });
 
@@ -867,39 +817,19 @@ async function deleteCollectionAll(colName) {
 }
 
 // =========================
-// Debug button (quick check)
+// Debug
 // =========================
-$("btnDebug").addEventListener("click", async () => {
-  try {
-    const lines = [];
-    lines.push("DEBUG INFO");
-    lines.push("Project: " + firebaseConfig.projectId);
-    lines.push("Medicines loaded: " + state.medicines.length);
-    lines.push("Customers loaded: " + state.customers.length);
-    lines.push("Sales loaded: " + state.sales.length);
-    lines.push("URL: " + location.href);
-    toast(lines.join("\n"), true);
-  } catch (e) {
-    safeToast("Debug failed:\n" + e.message, false, 10000);
-  }
+$("btnDebug").addEventListener("click", () => {
+  const lines = [];
+  lines.push("DEBUG INFO");
+  lines.push("Project: " + firebaseConfig.projectId);
+  lines.push("Medicines loaded: " + state.medicines.length);
+  lines.push("Next ID: " + computeNextMedicineIdFromState());
+  lines.push("Customers loaded: " + state.customers.length);
+  lines.push("Sales loaded: " + state.sales.length);
+  lines.push("URL: " + location.href);
+  wowToast("Debug", lines.join("\n"), true, 6500);
 });
-
-// =========================
-// Background Sheets logger (optional)
-// =========================
-function logToSheetInBackground(salePayload) {
-  if (!SHEET_LOGGER_URL) return;
-  fetch(SHEET_LOGGER_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-shifa-secret": SHEET_LOGGER_SECRET || ""
-    },
-    body: JSON.stringify({ type: "sale", sale: salePayload })
-  }).catch((e) => {
-    console.warn("Sheet logger failed (ignored):", e);
-  });
-}
 
 // =========================
 // Render All
@@ -911,12 +841,11 @@ function renderAll() {
   renderSalesMedicineDropdown();
   renderSalesHistory();
   renderCurrentSaleItems();
-  if (!el_mId.value) resetMedicineFormToNew();
 }
 
 // =========================
 // INIT
 // =========================
-resetMedicineFormToNew();
+setMedicineFormToNextFromFirebase(); // temporary until firebase loads
 renderAll();
 startRealtime();

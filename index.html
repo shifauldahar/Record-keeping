@@ -11,9 +11,7 @@
   <style>
     :root{
       --bg: #0b2f2c;
-      --bg2:#08302b;
       --card:#0f3a35;
-      --card2:#0c332f;
       --line: rgba(255, 210, 102, .22);
       --text: #eaf3f1;
       --muted: rgba(234,243,241,.7);
@@ -63,8 +61,8 @@
     }
     .btn:hover{transform: translateY(-1px); border-color: rgba(242,193,91,.5)}
     .btn.primary{
-      background: linear-gradient(180deg, rgba(242,193,91,.45), rgba(242,193,91,.12));
-      border-color: rgba(242,193,91,.55);
+      background: linear-gradient(180deg, rgba(242,193,91,.55), rgba(242,193,91,.16));
+      border-color: rgba(242,193,91,.65);
       color:#082421;
     }
     .btn.danger{
@@ -81,8 +79,8 @@
     }
     .tab.active{
       color:#082421;
-      background: linear-gradient(180deg, rgba(242,193,91,.55), rgba(242,193,91,.18));
-      border-color: rgba(242,193,91,.6);
+      background: linear-gradient(180deg, rgba(242,193,91,.62), rgba(242,193,91,.20));
+      border-color: rgba(242,193,91,.7);
       box-shadow: var(--shadow);
     }
 
@@ -144,27 +142,6 @@
     .split{display:flex; gap:10px; align-items:center; flex-wrap:wrap;justify-content:flex-end;}
     .mini{padding:8px 10px;border-radius:12px;font-size:12px;font-weight:850;}
 
-    .toast{
-      position: fixed;
-      right: 14px;
-      bottom: 14px;
-      background: rgba(15,58,53,.92);
-      border: 1px solid rgba(242,193,91,.35);
-      color: var(--text);
-      padding: 10px 12px;
-      border-radius: 14px;
-      box-shadow: var(--shadow);
-      font-weight: 800;
-      font-size: 12px;
-      max-width: 420px;
-      display:none;
-      z-index: 9999;
-      white-space:pre-line;
-    }
-    .toast.show{display:block}
-    .toast.ok{border-color: rgba(57,217,138,.35)}
-    .toast.bad{border-color: rgba(255,92,92,.35)}
-
     .badge{
       font-size:12px;
       color:rgba(234,243,241,.85);
@@ -175,6 +152,84 @@
       font-weight:800;
     }
     .right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+
+    /* WOW TOAST */
+    .toast{
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      width: min(440px, calc(100vw - 32px));
+      display:none;
+      z-index: 9999;
+    }
+    .toast.show{display:block}
+    .toastCard{
+      border-radius: 18px;
+      border: 1px solid rgba(242,193,91,.25);
+      background: radial-gradient(800px 220px at 20% 0%, rgba(242,193,91,.22), transparent 65%),
+                  linear-gradient(180deg, rgba(15,58,53,.95), rgba(6,31,29,.88));
+      box-shadow: 0 22px 70px rgba(0,0,0,.45);
+      overflow:hidden;
+      transform: translateY(6px);
+      animation: pop .18s ease-out forwards;
+    }
+    @keyframes pop{ to{ transform: translateY(0);} }
+    .toastTop{
+      display:flex; gap:10px; align-items:flex-start;
+      padding: 12px 12px 10px 12px;
+    }
+    .toastIcon{
+      height: 36px; width:36px; border-radius: 12px;
+      display:flex; align-items:center; justify-content:center;
+      font-weight: 1000;
+      border:1px solid rgba(242,193,91,.22);
+      background: rgba(242,193,91,.10);
+      flex: 0 0 auto;
+    }
+    .toastMain{flex:1; min-width: 0;}
+    .toastTitle{
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: .2px;
+      margin: 0 0 4px 0;
+      color: var(--accent2);
+    }
+    .toastMsg{
+      font-size: 12px;
+      font-weight: 780;
+      color: rgba(234,243,241,.92);
+      white-space: pre-line;
+      line-height: 1.35;
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+    .toastBar{
+      height: 3px;
+      background: rgba(242,193,91,.22);
+      position: relative;
+      overflow:hidden;
+    }
+    .toastBar > i{
+      display:block; height:100%;
+      width: 100%;
+      transform: translateX(-100%);
+      background: linear-gradient(90deg, rgba(242,193,91,.0), rgba(242,193,91,.9), rgba(57,217,138,.9));
+      animation: bar 3.5s linear forwards;
+    }
+    @keyframes bar{ to{ transform: translateX(0%);} }
+
+    .toast.ok .toastIcon{
+      border-color: rgba(57,217,138,.35);
+      background: rgba(57,217,138,.12);
+      color: rgba(57,217,138,.95);
+    }
+    .toast.bad .toastIcon{
+      border-color: rgba(255,92,92,.35);
+      background: rgba(255,92,92,.12);
+      color: rgba(255,92,92,.95);
+    }
+    .toast.ok .toastTitle{ color: rgba(57,217,138,.95); }
+    .toast.bad .toastTitle{ color: rgba(255,92,92,.95); }
 
     @media print{
       .no-print{display:none !important}
@@ -417,7 +472,7 @@
 
             <div class="hint">
               • Add multiple items then finalize once.<br/>
-              • Finalize saves to Firestore instantly and logs to Google Sheet in backend.
+              • Finalize saves to Firestore instantly.
             </div>
           </div>
         </div>
@@ -468,7 +523,19 @@
     </section>
   </div>
 
-  <div class="toast" id="toast"></div>
+  <!-- WOW Toast -->
+  <div class="toast" id="toast">
+    <div class="toastCard">
+      <div class="toastTop">
+        <div class="toastIcon" id="toastIcon">✓</div>
+        <div class="toastMain">
+          <div class="toastTitle" id="toastTitle">Done</div>
+          <p class="toastMsg" id="toastMsg"></p>
+        </div>
+      </div>
+      <div class="toastBar"><i id="toastBar"></i></div>
+    </div>
+  </div>
 
   <script type="module" src="./app.js"></script>
 </body>
