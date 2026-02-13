@@ -1038,19 +1038,62 @@ $("btnPrintMedicine").addEventListener("click", () => {
   });
 });
 
-$("btnPrintSales").addEventListener("click", () => {
-  const printArea = document.getElementById("salesPrintArea");
-  const html = printArea ? printArea.innerHTML : "<p>No sales to print</p>";
+// ✅ Sales Print (UPDATED): add Address column, remove time from Date column, and rename Note column to Consultation Reason
+function buildSalesPrintHtml() {
+  const { filtered } = computeFilteredSalesAndRevenue();
 
+  let rows = "";
+  for (const s of filtered) {
+    const dateOnly = String(s.date || "").split(" ")[0] || "";
+    const itemsText = (s.items || []).map(i => `${i.medName} × ${i.qty}`).join(", ");
+    const charged = Number(s.chargedPKR || 0);
+
+    rows += `
+      <tr>
+        <td>${escapeHtml(dateOnly)}</td>
+        <td>${escapeHtml(s.customer || "")}</td>
+        <td>${escapeHtml(s.mobile || "")}</td>
+        <td>${escapeHtml(s.address || "")}</td>
+        <td><b>${escapeHtml(String(charged))}</b></td>
+        <td>${escapeHtml(itemsText)}</td>
+        <td>${escapeHtml(s.note || "")}</td>
+      </tr>
+    `;
+  }
+
+  return `
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Customer</th>
+          <th>Mobile</th>
+          <th>Address</th>
+          <th>Charged (PKR)</th>
+          <th>Items</th>
+          <th>Consultation Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows || `<tr><td colspan="7">No sales found.</td></tr>`}
+      </tbody>
+    </table>
+  `;
+}
+
+$("btnPrintSales").addEventListener("click", () => {
   const filter = el_salesFilter.value || "all";
   const tag = filter === "today" ? "Today"
            : filter === "month" ? "This Month"
            : "All";
+
+  const html = buildSalesPrintHtml();
+
   openPrintWindow({
     title: "Sales Sheet",
     headerTitle: "SHIFA-UL-DAHAR — Sales Sheet",
     headerSubtitle: "Rohani u Jasmani Ilaj Gah",
-    extraMetaHtml: `Filter: ${escapeHtml(tag)} • Includes Charged PKR + Notes`,
+    extraMetaHtml: `Filter: ${escapeHtml(tag)} • Includes Charged PKR + Consultation Reason`,
     bodyHtml: html
   });
 });
@@ -1171,4 +1214,3 @@ setMedicineFormToNextFromFirebase(); // temporary until firebase loads
 renderAll();
 startLiveClock();
 // realtime starts after successful login (onAuthStateChanged)
-
